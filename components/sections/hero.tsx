@@ -71,7 +71,7 @@ export function Hero() {
           <div className="relative">
             <div className="relative z-10">
               <img
-                src="/excited-winner.png"
+                src="excited-winner.png"
                 alt="Happy raffle winner"
                 className="w-full h-auto rounded-2xl shadow-2xl"
               />
