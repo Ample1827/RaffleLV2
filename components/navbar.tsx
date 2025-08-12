@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Ticket } from "lucide-react"
+import Link from "next/link"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -25,20 +26,25 @@ export function Navbar() {
             <a href="#prizes" className="text-gray-300 hover:text-gold transition-colors duration-300">
               Prizes
             </a>
+            <a href="#buy-tickets" className="text-gray-300 hover:text-gold transition-colors duration-300">
+              Buy Tickets
+            </a>
             <a href="#testimonials" className="text-gray-300 hover:text-gold transition-colors duration-300">
               Reviews
             </a>
             <a href="#contact" className="text-gray-300 hover:text-gold transition-colors duration-300">
               Contact
             </a>
-            <Button
-              variant="outline"
-              className="border-gold text-gold hover:bg-gold hover:text-black bg-transparent transition-all duration-300"
-            >
-              Login
-            </Button>
+            <Link href="/login">
+              <Button
+                variant="outline"
+                className="border-gold text-gold hover:bg-gold hover:text-black bg-transparent transition-all duration-300"
+              >
+                Login
+              </Button>
+            </Link>
             <Button className="bg-gold hover:bg-gold/90 text-black font-semibold transition-all duration-300">
-              Buy Tickets
+              Get Started
             </Button>
           </div>
 
@@ -63,6 +69,9 @@ export function Navbar() {
               <a href="#prizes" className="text-gray-300 hover:text-gold transition-colors duration-300">
                 Prizes
               </a>
+              <a href="#buy-tickets" className="text-gray-300 hover:text-gold transition-colors duration-300">
+                Buy Tickets
+              </a>
               <a href="#testimonials" className="text-gray-300 hover:text-gold transition-colors duration-300">
                 Reviews
               </a>
@@ -70,14 +79,16 @@ export function Navbar() {
                 Contact
               </a>
               <div className="flex flex-col space-y-2 pt-4">
-                <Button
-                  variant="outline"
-                  className="border-gold text-gold hover:bg-gold hover:text-black bg-transparent transition-all duration-300"
-                >
-                  Login
-                </Button>
+                <Link href="/login">
+                  <Button
+                    variant="outline"
+                    className="border-gold text-gold hover:bg-gold hover:text-black bg-transparent transition-all duration-300 w-full"
+                  >
+                    Login
+                  </Button>
+                </Link>
                 <Button className="bg-gold hover:bg-gold/90 text-black font-semibold transition-all duration-300">
-                  Buy Tickets
+                  Get Started
                 </Button>
               </div>
             </div>

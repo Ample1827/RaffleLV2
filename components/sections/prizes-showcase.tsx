@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Clock, Users, ArrowRight } from "lucide-react"
+import Link from "next/link"
 
 export function PrizesShowcase() {
   const prizes = [
@@ -120,13 +121,15 @@ export function PrizesShowcase() {
         </div>
 
         <div className="text-center mt-12">
-          <Button
-            variant="outline"
-            size="lg"
-            className="border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white bg-transparent"
-          >
-            View All Prizes
-          </Button>
+          <Link href="/prizes">
+            <Button
+              variant="outline"
+              size="lg"
+              className="border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white bg-transparent"
+            >
+              View All Prizes
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
