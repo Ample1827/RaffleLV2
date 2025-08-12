@@ -92,7 +92,7 @@ const allPrizes = [
     id: 7,
     title: "Cash Prize - $50,000",
     value: 50000,
-    image: "/cash-money-gold.png",
+    image: "./cash-money-gold.png",
     ticketPrice: 20,
     totalTickets: 4000,
     soldTickets: 3500,
@@ -250,7 +250,7 @@ export function PrizeViewingSystem() {
                 className="overflow-hidden border border-gray-700 bg-gray-900/50 backdrop-blur-sm hover:border-gold/50 transition-all duration-300 hover:scale-105"
               >
                 <div className="relative">
-                  <img src={prize.image || "/placeholder.svg"} alt={prize.title} className="w-full h-48 object-cover" />
+                  <img src={prize.image || "./placeholder.svg"} alt={prize.title} className="w-full h-48 object-cover" />
                   <Badge className={`absolute top-4 left-4 ${getStatusColor(prize.status)} text-white`}>
                     {prize.status}
                   </Badge>

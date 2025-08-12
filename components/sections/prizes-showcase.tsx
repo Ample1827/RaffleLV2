@@ -58,7 +58,7 @@ export function PrizesShowcase() {
               className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
               <div className="relative">
-                <img src={prize.image || "/placeholder.svg"} alt={prize.title} className="w-full h-48 object-cover" />
+                <img src={prize.image || "./placeholder.svg"} alt={prize.title} className="w-full h-48 object-cover" />
                 <Badge
                   className={`absolute top-4 left-4 ${
                     prize.status === "Hot"
