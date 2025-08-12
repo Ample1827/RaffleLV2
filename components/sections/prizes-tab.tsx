@@ -53,7 +53,7 @@ const prizeCategories = {
       id: 5,
       name: "Cash Prize",
       value: "$500",
-      image: "./cash-money-gold.png",
+      image: "cash-money-gold.png",
       description: "Instant cash reward",
       odds: "1 in 50",
       timeLeft: "18 hours",

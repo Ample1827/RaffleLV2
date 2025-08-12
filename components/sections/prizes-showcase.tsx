@@ -10,7 +10,7 @@ export function PrizesShowcase() {
       id: 1,
       title: "Luxury Tesla Model S",
       value: "$95,000",
-      image: "/red-tesla-model-s.png",
+      image: "red-tesla-model-s.png",
       ticketPrice: "$25",
       totalTickets: 5000,
       soldTickets: 3200,
