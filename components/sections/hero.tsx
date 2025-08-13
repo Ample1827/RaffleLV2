@@ -1,7 +1,38 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Star, Users, Trophy } from "lucide-react"
+import { useState } from "react"
 
 export function Hero() {
+  const [selectedTickets, setSelectedTickets] = useState<string[]>([])
+
+  const ticketSections = Array.from({ length: 10 }, (_, i) => {
+    const start = i * 1000
+    const end = start + 999
+    const available = 1000 // All tickets available to match buy tickets page
+    return {
+      range: `${start.toString().padStart(4, "0")}-${end.toString().padStart(4, "0")}`,
+      available,
+      total: 1000,
+      sectionIndex: i,
+    }
+  })
+
+  const handleTicketBoxClick = (sectionIndex: number) => {
+    window.location.href = `/buy-tickets#section-${sectionIndex}`
+    // Small delay to ensure page loads before scrolling to section
+    setTimeout(() => {
+      const sectionElement = document.querySelector(`[data-section="${sectionIndex}"]`)
+      if (sectionElement) {
+        sectionElement.scrollIntoView({ behavior: "smooth" })
+        // Trigger click on the section to open the dialog
+        const sectionCard = sectionElement as HTMLElement
+        if (sectionCard) sectionCard.click()
+      }
+    }, 500)
+  }
+
   return (
     <section className="relative py-20 lg:py-32 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -28,7 +59,11 @@ export function Hero() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8 py-4">
+              <Button
+                size="lg"
+                className="bg-primary hover:bg-primary/90 text-lg px-8 py-4"
+                onClick={() => (window.location.href = "/buy-tickets")}
+              >
                 Buy Tickets Now
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -36,6 +71,14 @@ export function Hero() {
                 size="lg"
                 variant="outline"
                 className="border-primary text-primary hover:bg-primary hover:text-primary-foreground text-lg px-8 py-4 bg-transparent"
+                onClick={() => {
+                  window.location.href = "/buy-tickets"
+                  // Small delay to ensure page loads before triggering the lucky numbers dialog
+                  setTimeout(() => {
+                    const luckyButton = document.querySelector("[data-lucky-numbers-trigger]") as HTMLElement
+                    if (luckyButton) luckyButton.click()
+                  }, 500)
+                }}
               >
                 🎲 Draw Lucky Numbers
               </Button>
@@ -67,20 +110,46 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Right Content - Hero Image */}
           <div className="relative">
-            <div className="relative z-10">
-              <img
-                src="/excited-winner.png"
-                alt="Happy raffle winner"
-                className="w-full h-auto rounded-2xl shadow-2xl"
-              />
-            </div>
-            <div className="absolute -top-4 -right-4 bg-primary text-primary-foreground px-4 py-2 rounded-full font-bold shadow-lg animate-bounce">
-              🎉 New Winner!
-            </div>
-            <div className="absolute -bottom-4 -left-4 bg-accent text-accent-foreground px-4 py-2 rounded-full font-bold shadow-lg">
-              💰 $50K Prize
+            <div className="bg-white rounded-2xl shadow-2xl p-6 border border-slate-200">
+              <h3 className="text-2xl font-bold text-slate-800 mb-4 text-center">Available Tickets</h3>
+              <p className="text-slate-600 text-center mb-6">10,000 Total Tickets</p>
+
+              <div className="grid grid-cols-2 gap-3">
+                {ticketSections.map((section) => (
+                  <div
+                    key={section.range}
+                    className="bg-slate-50 border-2 border-slate-200 rounded-lg p-4 cursor-pointer transition-all duration-300 hover:border-amber-400 hover:shadow-md hover:scale-105 group"
+                    onClick={() => handleTicketBoxClick(section.sectionIndex)}
+                  >
+                    <div className="text-center">
+                      <div className="font-bold text-slate-800 text-sm mb-1 group-hover:text-amber-600 transition-colors">
+                        {section.range}
+                      </div>
+                      <div className="text-xs text-slate-600 mb-2">{section.available} Available</div>
+                      <div className="w-full bg-slate-200 rounded-full h-1.5">
+                        <div
+                          className="bg-green-500 h-1.5 rounded-full transition-all group-hover:bg-amber-500"
+                          style={{ width: `${(section.available / section.total) * 100}%` }}
+                        />
+                      </div>
+                      <div className="text-xs font-medium text-slate-700 mt-1 group-hover:text-amber-600 transition-colors">
+                        100%
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm text-slate-500 mb-3">Click any section to view and select tickets</p>
+                <Button
+                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+                  onClick={() => (window.location.href = "/buy-tickets")}
+                >
+                  View All Tickets
+                </Button>
+              </div>
             </div>
           </div>
         </div>

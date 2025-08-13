@@ -100,6 +100,8 @@ export function TicketPackages() {
   const [luckyNumberAmount, setLuckyNumberAmount] = useState("")
   const [generatedNumbers, setGeneratedNumbers] = useState<string[]>([])
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false)
+  const [showLuckyDialog, setShowLuckyDialog] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
   const [purchaseForm, setPurchaseForm] = useState({
     firstName: "",
     lastName: "",
@@ -121,7 +123,6 @@ export function TicketPackages() {
   }
 
   const applyPromoCode = () => {
-    // Handle promo code application
     alert(`Applying promo code: ${purchaseForm.promoCode}`)
   }
 
@@ -137,7 +138,6 @@ export function TicketPackages() {
   }
 
   const handlePayNow = () => {
-    // Handle payment processing
     alert("Processing payment...")
   }
 
@@ -145,14 +145,20 @@ export function TicketPackages() {
     const amount = Number.parseInt(luckyNumberAmount) || 0
     if (amount <= 0 || amount > 10000) return
 
-    const numbers = new Set<string>()
-    while (numbers.size < amount) {
-      const randomNum = Math.floor(Math.random() * 10000)
-      numbers.add(randomNum.toString().padStart(4, "0"))
-    }
+    setIsGenerating(true)
 
-    setGeneratedNumbers(Array.from(numbers))
-    setSelectedTickets(Array.from(numbers))
+    // Casino slot animation delay
+    setTimeout(() => {
+      const numbers = new Set<string>()
+      while (numbers.size < amount) {
+        const randomNum = Math.floor(Math.random() * 10000)
+        numbers.add(randomNum.toString().padStart(4, "0"))
+      }
+
+      setGeneratedNumbers(Array.from(numbers))
+      setSelectedTickets(Array.from(numbers))
+      setIsGenerating(false)
+    }, 3000) // 3 second animation
   }
 
   const toggleTicketSelection = (ticketNumber: string) => {
@@ -161,17 +167,15 @@ export function TicketPackages() {
     )
   }
 
-  // Generate detailed ticket numbers for a section
   const generateTicketNumbers = (sectionIndex: number) => {
     const startNum = sectionIndex * 1000
     const tickets = []
 
     for (let i = 0; i < 1000; i++) {
       const ticketNumber = startNum + i
-      const isAvailable = Math.random() > 0.2 // 80% chance of being available
       tickets.push({
         number: ticketNumber.toString().padStart(4, "0"),
-        available: isAvailable,
+        available: true, // All tickets are now available
       })
     }
 
@@ -189,8 +193,51 @@ export function TicketPackages() {
     return ticketPackages.find((pkg) => pkg.id === selectedPackage)
   }
 
+  const handleSaveAndBuyLucky = () => {
+    setShowLuckyDialog(false)
+    setShowPurchaseDialog(true)
+  }
+
   return (
     <div className="space-y-8">
+      <style jsx>{`
+        @keyframes rainbow-glow {
+          0% { box-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000, 0 0 60px #ff0000; }
+          16.66% { box-shadow: 0 0 20px #ff8000, 0 0 40px #ff8000, 0 0 60px #ff8000; }
+          33.33% { box-shadow: 0 0 20px #ffff00, 0 0 40px #ffff00, 0 0 60px #ffff00; }
+          50% { box-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00, 0 0 60px #00ff00; }
+          66.66% { box-shadow: 0 0 20px #0080ff, 0 0 40px #0080ff, 0 0 60px #0080ff; }
+          83.33% { box-shadow: 0 0 20px #8000ff, 0 0 40px #8000ff, 0 0 60px #8000ff; }
+          100% { box-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000, 0 0 60px #ff0000; }
+        }
+        
+        @keyframes slot-spin {
+          0% { transform: rotateY(0deg); }
+          25% { transform: rotateY(90deg); }
+          50% { transform: rotateY(180deg); }
+          75% { transform: rotateY(270deg); }
+          100% { transform: rotateY(360deg); }
+        }
+        
+        .rainbow-glow {
+          animation: rainbow-glow 2s linear infinite;
+          border: 3px solid transparent;
+          background: linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #00ff00, #0080ff, #8000ff, #ff0000);
+          background-size: 400% 400%;
+          animation: rainbow-glow 2s linear infinite, gradient-shift 3s ease infinite;
+        }
+        
+        @keyframes gradient-shift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        
+        .slot-animation {
+          animation: slot-spin 0.5s linear infinite;
+        }
+      `}</style>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {ticketPackages.map((pkg) => {
           const IconComponent = pkg.icon
@@ -260,6 +307,101 @@ export function TicketPackages() {
         })}
       </div>
 
+      <div className="text-center">
+        <Dialog open={showLuckyDialog} onOpenChange={setShowLuckyDialog}>
+          <DialogTrigger asChild>
+            <Button
+              size="lg"
+              className="rainbow-glow text-white font-bold px-16 py-8 text-2xl shadow-2xl transform hover:scale-105 transition-all duration-300 relative overflow-hidden"
+              style={{
+                background: "linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #00ff00, #0080ff, #8000ff, #ff0000)",
+                backgroundSize: "400% 400%",
+              }}
+              data-lucky-numbers-trigger
+            >
+              <Shuffle className="h-8 w-8 mr-4" />
+              Draw Lucky Numbers
+              <Sparkles className="h-8 w-8 ml-4" />
+            </Button>
+          </DialogTrigger>
+
+          <DialogContent className="max-w-md bg-white border-slate-200">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-center text-slate-800 mb-4">
+                🎰 Lucky Number Generator 🎰
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              <div>
+                <Label htmlFor="lucky-amount" className="text-slate-700 text-lg font-semibold">
+                  How many tickets do you want to generate?
+                </Label>
+                <Input
+                  id="lucky-amount"
+                  type="number"
+                  min="1"
+                  max="10000"
+                  value={luckyNumberAmount}
+                  onChange={(e) => setLuckyNumberAmount(e.target.value)}
+                  placeholder="Enter number of tickets"
+                  className="mt-2 bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-400 text-lg p-4"
+                />
+              </div>
+
+              {isGenerating && (
+                <div className="text-center py-8">
+                  <div className="text-6xl slot-animation mb-4">🎰</div>
+                  <div className="text-xl font-bold text-amber-600 mb-2">Generating Lucky Numbers...</div>
+                  <div className="text-slate-600">🍀 Good luck is coming your way! 🍀</div>
+                </div>
+              )}
+
+              {generatedNumbers.length > 0 && !isGenerating && (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <div className="text-2xl mb-2">🎉 Your Lucky Numbers! 🎉</div>
+                    <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg max-h-40 overflow-y-auto">
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {generatedNumbers.map((number) => (
+                          <Badge key={number} className="bg-amber-500 text-white text-lg px-3 py-1">
+                            {number}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-center space-y-2">
+                    <div className="text-lg font-semibold text-slate-800">Total: {generatedNumbers.length} tickets</div>
+                    <div className="text-xl font-bold text-amber-600">Price: ${generatedNumbers.length * 20}</div>
+                  </div>
+
+                  <Button
+                    onClick={handleSaveAndBuyLucky}
+                    className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-4 text-lg"
+                  >
+                    Save and Buy Now 🛒
+                  </Button>
+                </div>
+              )}
+
+              {!isGenerating && generatedNumbers.length === 0 && (
+                <Button
+                  onClick={generateLuckyNumbers}
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-4 text-lg"
+                  disabled={!luckyNumberAmount || Number.parseInt(luckyNumberAmount) <= 0}
+                >
+                  <Shuffle className="h-6 w-6 mr-2" />
+                  Generate Lucky Numbers! 🎲
+                </Button>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Purchase Dialog */}
       <Dialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog}>
         <DialogContent className="max-w-2xl bg-white border-slate-200">
           <DialogHeader>
@@ -410,57 +552,6 @@ export function TicketPackages() {
         </DialogContent>
       </Dialog>
 
-      <Card className="bg-white border-amber-200 shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-amber-400 to-amber-500 text-white">
-          <CardTitle className="text-xl font-bold flex items-center gap-2">
-            <Shuffle className="h-6 w-6" />
-            Draw Lucky Numbers
-          </CardTitle>
-          <CardDescription className="text-white/90">Generate random ticket numbers</CardDescription>
-        </CardHeader>
-
-        <CardContent className="p-6">
-          <div className="flex gap-4 items-end">
-            <div className="flex-1">
-              <Label htmlFor="lucky-amount" className="text-slate-700 text-sm">
-                Number of Tickets
-              </Label>
-              <Input
-                id="lucky-amount"
-                type="number"
-                min="1"
-                max="10000"
-                value={luckyNumberAmount}
-                onChange={(e) => setLuckyNumberAmount(e.target.value)}
-                placeholder="Enter amount"
-                className="mt-1 bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-400"
-              />
-            </div>
-            <Button
-              onClick={generateLuckyNumbers}
-              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold"
-              disabled={!luckyNumberAmount || Number.parseInt(luckyNumberAmount) <= 0}
-            >
-              <Shuffle className="h-4 w-4 mr-2" />
-              Generate
-            </Button>
-          </div>
-
-          {generatedNumbers.length > 0 && (
-            <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
-              <h4 className="text-amber-700 font-semibold mb-2">Generated Numbers:</h4>
-              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                {generatedNumbers.map((number) => (
-                  <Badge key={number} className="bg-amber-500 text-white">
-                    {number}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       <div className="mt-12">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-slate-800 mb-4">
@@ -473,12 +564,15 @@ export function TicketPackages() {
           {Array.from({ length: 10 }, (_, i) => {
             const startNum = i * 1000
             const endNum = startNum + 999
-            const availableTickets = Math.floor(Math.random() * 200) + 800
+            const availableTickets = 1000
 
             return (
               <Dialog key={i}>
                 <DialogTrigger asChild>
-                  <Card className="bg-slate-50 border-slate-200 hover:border-amber-400 transition-all duration-300 cursor-pointer hover:scale-105 shadow-md hover:shadow-lg">
+                  <Card
+                    className="bg-slate-50 border-slate-200 hover:border-amber-400 transition-all duration-300 cursor-pointer hover:scale-105 shadow-md hover:shadow-lg"
+                    data-section={i}
+                  >
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg text-slate-700 text-center">
                         {startNum.toString().padStart(4, "0")} - {endNum.toString().padStart(4, "0")}
@@ -491,7 +585,7 @@ export function TicketPackages() {
                         <div className="w-full bg-slate-200 rounded-full h-2 mt-2">
                           <div
                             className="bg-amber-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${(availableTickets / 1000) * 100}%` }}
+                            style={{ width: `100%` }}
                           ></div>
                         </div>
                       </div>
@@ -511,17 +605,14 @@ export function TicketPackages() {
                       {generateTicketNumbers(i).map((ticket) => (
                         <Button
                           key={ticket.number}
-                          variant={ticket.available ? "outline" : "secondary"}
+                          variant="outline"
                           size="sm"
                           className={`h-8 text-xs ${
-                            ticket.available
-                              ? selectedTickets.includes(ticket.number)
-                                ? "bg-amber-500 text-white border-amber-500"
-                                : "border-slate-300 text-slate-700 bg-white hover:bg-amber-500 hover:text-white hover:border-amber-500"
-                              : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                            selectedTickets.includes(ticket.number)
+                              ? "bg-amber-500 text-white border-amber-500"
+                              : "border-slate-300 text-slate-700 bg-white hover:bg-amber-500 hover:text-white hover:border-amber-500"
                           }`}
-                          disabled={!ticket.available}
-                          onClick={() => ticket.available && toggleTicketSelection(ticket.number)}
+                          onClick={() => toggleTicketSelection(ticket.number)}
                         >
                           {ticket.number}
                         </Button>
@@ -534,10 +625,6 @@ export function TicketPackages() {
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 border border-slate-300 bg-white rounded"></div>
                         <span className="text-slate-600">Available</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-slate-200 rounded"></div>
-                        <span className="text-slate-600">Sold</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 bg-amber-500 rounded"></div>
