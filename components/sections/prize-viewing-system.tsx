@@ -14,7 +14,7 @@ const allPrizes = [
     id: 1,
     title: "Luxury Tesla Model S",
     value: 95000,
-    image: "red-tesla-model-s.png",
+    image: "/red-tesla-model-s.png",
     ticketPrice: 25,
     totalTickets: 5000,
     soldTickets: 3200,
@@ -27,7 +27,7 @@ const allPrizes = [
     id: 2,
     title: "Dream Vacation to Maldives",
     value: 15000,
-    image: "maldives-bungalow.png",
+    image: "/maldives-bungalow.png",
     ticketPrice: 10,
     totalTickets: 2000,
     soldTickets: 1800,
@@ -40,7 +40,7 @@ const allPrizes = [
     id: 3,
     title: "Apple MacBook Pro + iPhone Bundle",
     value: 5000,
-    image: "placeholder-al9ry.png",
+    image: "/placeholder-al9ry.png",
     ticketPrice: 5,
     totalTickets: 1500,
     soldTickets: 450,
@@ -53,7 +53,7 @@ const allPrizes = [
     id: 4,
     title: "Luxury Sports Car - Porsche 911",
     value: 120000,
-    image: "luxury-sports-car.png",
+    image: "/luxury-sports-car.png",
     ticketPrice: 50,
     totalTickets: 3000,
     soldTickets: 1200,
@@ -66,7 +66,7 @@ const allPrizes = [
     id: 5,
     title: "Modern Dream House",
     value: 500000,
-    image: "modern-house.png",
+    image: "/modern-house.png",
     ticketPrice: 100,
     totalTickets: 10000,
     soldTickets: 2500,
@@ -79,7 +79,7 @@ const allPrizes = [
     id: 6,
     title: "Luxury Vacation Resort Package",
     value: 25000,
-    image: "luxury-vacation-resort.png",
+    image: "/luxury-vacation-resort.png",
     ticketPrice: 15,
     totalTickets: 2500,
     soldTickets: 800,
@@ -92,7 +92,7 @@ const allPrizes = [
     id: 7,
     title: "Cash Prize - $50,000",
     value: 50000,
-    image: "cash-money-gold.png",
+    image: "/cash-money-gold.png",
     ticketPrice: 20,
     totalTickets: 4000,
     soldTickets: 3500,
@@ -105,7 +105,7 @@ const allPrizes = [
     id: 8,
     title: "Gaming Setup Ultimate",
     value: 8000,
-    image: "placeholder-grmu9.png",
+    image: "/placeholder-grmu9.png",
     ticketPrice: 8,
     totalTickets: 1200,
     soldTickets: 300,
@@ -250,7 +250,7 @@ export function PrizeViewingSystem() {
                 className="overflow-hidden border border-gray-700 bg-gray-900/50 backdrop-blur-sm hover:border-gold/50 transition-all duration-300 hover:scale-105"
               >
                 <div className="relative">
-                  <img src={prize.image || "./placeholder.svg"} alt={prize.title} className="w-full h-48 object-cover" />
+                  <img src={prize.image || "/placeholder.svg"} alt={prize.title} className="w-full h-48 object-cover" />
                   <Badge className={`absolute top-4 left-4 ${getStatusColor(prize.status)} text-white`}>
                     {prize.status}
                   </Badge>

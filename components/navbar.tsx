@@ -1,51 +1,65 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Ticket } from "lucide-react"
 import Link from "next/link"
+import { useRouter, usePathname } from "next/navigation"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const handleContactClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+
+    // If we're on the home page, scroll to contact section
+    if (pathname === "/") {
+      const contactSection = document.getElementById("contact")
+      if (contactSection) {
+        contactSection.scrollIntoView({ behavior: "smooth" })
+      }
+    } else {
+      // If we're on another page, navigate to home page with contact hash
+      router.push("/#contact")
+    }
+
+    // Close mobile menu if open
+    setIsOpen(false)
+  }
 
   return (
     <nav className="bg-black/90 backdrop-blur-xl border-b border-gold/20 sticky top-0 z-50 shadow-lg shadow-black/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
             <Ticket className="h-8 w-8 text-gold" />
             <span className="text-2xl font-bold text-white">RafflePro</span>
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#how-it-works" className="text-gray-300 hover:text-gold transition-colors duration-300">
-              How It Works
-            </a>
-            <a href="#prizes" className="text-gray-300 hover:text-gold transition-colors duration-300">
-              Prizes
-            </a>
-            <a href="#buy-tickets" className="text-gray-300 hover:text-gold transition-colors duration-300">
+            <Link href="/buy-tickets" className="text-gray-300 hover:text-gold transition-colors duration-300">
               Buy Tickets
-            </a>
-            <a href="#testimonials" className="text-gray-300 hover:text-gold transition-colors duration-300">
-              Reviews
-            </a>
-            <a href="#contact" className="text-gray-300 hover:text-gold transition-colors duration-300">
+            </Link>
+            <Link href="/verify-tickets" className="text-gray-300 hover:text-gold transition-colors duration-300">
+              Verify Tickets
+            </Link>
+            <button
+              onClick={handleContactClick}
+              className="text-gray-300 hover:text-gold transition-colors duration-300"
+            >
               Contact
-            </a>
+            </button>
             <Link href="/login">
-              <Button
-                variant="outline"
-                className="border-gold text-gold hover:bg-gold hover:text-black bg-transparent transition-all duration-300"
-              >
+              <Button className="bg-white text-black hover:bg-gray-100 transition-all duration-300 shadow-lg">
                 Login
               </Button>
             </Link>
-            <Button className="bg-gold hover:bg-gold/90 text-black font-semibold transition-all duration-300">
-              Get Started
-            </Button>
           </div>
 
           {/* Mobile menu button */}
@@ -63,33 +77,32 @@ export function Navbar() {
         {isOpen && (
           <div className="md:hidden py-4 border-t border-gold/20">
             <div className="flex flex-col space-y-4">
-              <a href="#how-it-works" className="text-gray-300 hover:text-gold transition-colors duration-300">
-                How It Works
-              </a>
-              <a href="#prizes" className="text-gray-300 hover:text-gold transition-colors duration-300">
-                Prizes
-              </a>
-              <a href="#buy-tickets" className="text-gray-300 hover:text-gold transition-colors duration-300">
+              <Link
+                href="/buy-tickets"
+                className="text-gray-300 hover:text-gold transition-colors duration-300"
+                onClick={() => setIsOpen(false)}
+              >
                 Buy Tickets
-              </a>
-              <a href="#testimonials" className="text-gray-300 hover:text-gold transition-colors duration-300">
-                Reviews
-              </a>
-              <a href="#contact" className="text-gray-300 hover:text-gold transition-colors duration-300">
+              </Link>
+              <Link
+                href="/verify-tickets"
+                className="text-gray-300 hover:text-gold transition-colors duration-300"
+                onClick={() => setIsOpen(false)}
+              >
+                Verify Tickets
+              </Link>
+              <button
+                onClick={handleContactClick}
+                className="text-gray-300 hover:text-gold transition-colors duration-300 text-left"
+              >
                 Contact
-              </a>
+              </button>
               <div className="flex flex-col space-y-2 pt-4">
-                <Link href="/login">
-                  <Button
-                    variant="outline"
-                    className="border-gold text-gold hover:bg-gold hover:text-black bg-transparent transition-all duration-300 w-full"
-                  >
+                <Link href="/login" onClick={() => setIsOpen(false)}>
+                  <Button className="bg-white text-black hover:bg-gray-100 transition-all duration-300 w-full shadow-lg">
                     Login
                   </Button>
                 </Link>
-                <Button className="bg-gold hover:bg-gold/90 text-black font-semibold transition-all duration-300">
-                  Get Started
-                </Button>
               </div>
             </div>
           </div>

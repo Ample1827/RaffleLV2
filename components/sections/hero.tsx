@@ -37,7 +37,7 @@ export function Hero() {
                 variant="outline"
                 className="border-primary text-primary hover:bg-primary hover:text-primary-foreground text-lg px-8 py-4 bg-transparent"
               >
-                View Current Prizes
+                🎲 Draw Lucky Numbers
               </Button>
             </div>
 
@@ -71,7 +71,7 @@ export function Hero() {
           <div className="relative">
             <div className="relative z-10">
               <img
-                src="excited-winner.png"
+                src="/excited-winner.png"
                 alt="Happy raffle winner"
                 className="w-full h-auto rounded-2xl shadow-2xl"
               />

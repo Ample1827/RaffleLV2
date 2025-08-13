@@ -2,7 +2,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Clock, Users, ArrowRight } from "lucide-react"
-import Link from "next/link"
 
 export function PrizesShowcase() {
   const prizes = [
@@ -10,7 +9,7 @@ export function PrizesShowcase() {
       id: 1,
       title: "Luxury Tesla Model S",
       value: "$95,000",
-      image: "red-tesla-model-s.png",
+      image: "/red-tesla-model-s.png",
       ticketPrice: "$25",
       totalTickets: 5000,
       soldTickets: 3200,
@@ -21,7 +20,7 @@ export function PrizesShowcase() {
       id: 2,
       title: "Dream Vacation to Maldives",
       value: "$15,000",
-      image: "maldives-bungalow.png",
+      image: "/maldives-bungalow.png",
       ticketPrice: "$10",
       totalTickets: 2000,
       soldTickets: 1800,
@@ -32,7 +31,7 @@ export function PrizesShowcase() {
       id: 3,
       title: "Apple MacBook Pro + iPhone Bundle",
       value: "$5,000",
-      image: "placeholder-al9ry.png",
+      image: "/placeholder-al9ry.png",
       ticketPrice: "$5",
       totalTickets: 1500,
       soldTickets: 450,
@@ -58,7 +57,7 @@ export function PrizesShowcase() {
               className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
               <div className="relative">
-                <img src={prize.image || "./placeholder.svg"} alt={prize.title} className="w-full h-48 object-cover" />
+                <img src={prize.image || "/placeholder.svg"} alt={prize.title} className="w-full h-48 object-cover" />
                 <Badge
                   className={`absolute top-4 left-4 ${
                     prize.status === "Hot"
@@ -118,18 +117,6 @@ export function PrizesShowcase() {
               </CardContent>
             </Card>
           ))}
-        </div>
-
-        <div className="text-center mt-12">
-          <Link href="/prizes">
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white bg-transparent"
-            >
-              View All Prizes
-            </Button>
-          </Link>
         </div>
       </div>
     </section>

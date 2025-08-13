@@ -6,94 +6,110 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Ticket, Star, Zap, Crown, Sparkles } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Star, Zap, Sparkles, Shuffle, ShoppingCart } from "lucide-react"
 
 const ticketPackages = [
-  { id: 1, tickets: 1, price: 5, popular: false, icon: Ticket, color: "from-gray-600 to-gray-700" },
-  { id: 2, tickets: 5, price: 20, popular: false, icon: Ticket, color: "from-blue-600 to-blue-700", discount: 20 },
-  { id: 3, tickets: 10, price: 35, popular: true, icon: Star, color: "from-purple-600 to-purple-700", discount: 30 },
-  { id: 4, tickets: 15, price: 50, popular: false, icon: Zap, color: "from-green-600 to-green-700", discount: 33 },
   {
-    id: 5,
+    id: 1,
+    tickets: 10,
+    price: 200,
+    originalPrice: 250,
+    popular: true,
+    icon: Star,
+    color: "from-amber-400 to-amber-500",
+  },
+  {
+    id: 2,
+    tickets: 15,
+    price: 325,
+    originalPrice: 375,
+    popular: false,
+    icon: Zap,
+    color: "from-emerald-400 to-emerald-500",
+  },
+  {
+    id: 3,
     tickets: 20,
-    price: 60,
+    price: 400,
+    originalPrice: 500,
     popular: false,
     icon: Sparkles,
-    color: "from-orange-600 to-orange-700",
-    discount: 40,
+    color: "from-rose-400 to-rose-500",
   },
-  { id: 6, tickets: 25, price: 70, popular: false, icon: Crown, color: "from-red-600 to-red-700", discount: 44 },
-  { id: 7, tickets: 50, price: 125, popular: false, icon: Crown, color: "from-pink-600 to-pink-700", discount: 50 },
-  {
-    id: 8,
-    tickets: 100,
-    price: 200,
-    popular: false,
-    icon: Crown,
-    color: "from-yellow-600 to-yellow-700",
-    discount: 60,
-  },
-  {
-    id: 9,
-    tickets: 125,
-    price: 225,
-    popular: false,
-    icon: Crown,
-    color: "from-indigo-600 to-indigo-700",
-    discount: 64,
-  },
-  { id: 10, tickets: 150, price: 250, popular: false, icon: Crown, color: "from-teal-600 to-teal-700", discount: 67 },
-  { id: 11, tickets: 200, price: 300, popular: false, icon: Crown, color: "from-cyan-600 to-cyan-700", discount: 70 },
-  {
-    id: 12,
-    tickets: 250,
-    price: 350,
-    popular: false,
-    icon: Crown,
-    color: "from-emerald-600 to-emerald-700",
-    discount: 72,
-  },
-  { id: 13, tickets: 500, price: 600, popular: false, icon: Crown, color: "from-amber-600 to-amber-700", discount: 76 },
-  { id: 14, tickets: 1000, price: 1000, popular: false, icon: Crown, color: "from-gold to-yellow-600", discount: 80 },
 ]
 
 export function TicketPackages() {
-  const [customTickets, setCustomTickets] = useState("")
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null)
+  const [selectedSection, setSelectedSection] = useState<number | null>(null)
+  const [selectedTickets, setSelectedTickets] = useState<string[]>([])
+  const [luckyNumberAmount, setLuckyNumberAmount] = useState("")
+  const [generatedNumbers, setGeneratedNumbers] = useState<string[]>([])
 
-  const calculateCustomPrice = (tickets: number) => {
-    if (tickets <= 0) return 0
-    if (tickets === 1) return 5
-    if (tickets <= 10) return Math.floor(tickets * 4)
-    if (tickets <= 50) return Math.floor(tickets * 3.5)
-    if (tickets <= 100) return Math.floor(tickets * 3)
-    if (tickets <= 500) return Math.floor(tickets * 2.5)
-    return Math.floor(tickets * 2)
+  const generateLuckyNumbers = () => {
+    const amount = Number.parseInt(luckyNumberAmount) || 0
+    if (amount <= 0 || amount > 10000) return
+
+    const numbers = new Set<string>()
+    while (numbers.size < amount) {
+      const randomNum = Math.floor(Math.random() * 10000)
+      numbers.add(randomNum.toString().padStart(4, "0"))
+    }
+
+    setGeneratedNumbers(Array.from(numbers))
+    setSelectedTickets(Array.from(numbers))
   }
 
-  const customPrice = calculateCustomPrice(Number.parseInt(customTickets) || 0)
+  const toggleTicketSelection = (ticketNumber: string) => {
+    setSelectedTickets((prev) =>
+      prev.includes(ticketNumber) ? prev.filter((t) => t !== ticketNumber) : [...prev, ticketNumber],
+    )
+  }
+
+  // Generate detailed ticket numbers for a section
+  const generateTicketNumbers = (sectionIndex: number) => {
+    const startNum = sectionIndex * 1000
+    const tickets = []
+
+    for (let i = 0; i < 1000; i++) {
+      const ticketNumber = startNum + i
+      const isAvailable = Math.random() > 0.2 // 80% chance of being available
+      tickets.push({
+        number: ticketNumber.toString().padStart(4, "0"),
+        available: isAvailable,
+      })
+    }
+
+    return tickets
+  }
+
+  const handlePurchaseFromTable = (sectionTickets: string[]) => {
+    const selectedFromSection = selectedTickets.filter((ticket) => sectionTickets.includes(ticket))
+    if (selectedFromSection.length > 0) {
+      // Handle purchase logic here
+      alert(`Purchasing ${selectedFromSection.length} tickets: ${selectedFromSection.join(", ")}`)
+    }
+  }
 
   return (
     <div className="space-y-8">
-      {/* Predefined Packages */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {ticketPackages.map((pkg) => {
           const IconComponent = pkg.icon
-          const originalPrice = pkg.tickets * 5
-          const savings = originalPrice - pkg.price
+          const savings = pkg.originalPrice - pkg.price
 
           return (
             <Card
               key={pkg.id}
-              className={`relative overflow-hidden border-2 transition-all duration-300 hover:scale-105 cursor-pointer ${
+              className={`relative overflow-hidden border-2 transition-all duration-300 hover:scale-105 cursor-pointer bg-white shadow-lg ${
                 selectedPackage === pkg.id
-                  ? "border-gold shadow-lg shadow-gold/20"
-                  : "border-gray-700 hover:border-gold/50"
-              } ${pkg.popular ? "ring-2 ring-gold" : ""}`}
+                  ? "border-amber-500 shadow-xl shadow-amber-200"
+                  : "border-slate-200 hover:border-amber-300"
+              } ${pkg.popular ? "ring-2 ring-amber-400" : ""}`}
               onClick={() => setSelectedPackage(pkg.id)}
             >
               {pkg.popular && (
-                <Badge className="absolute top-2 right-2 bg-gold text-black font-semibold">Most Popular</Badge>
+                <Badge className="absolute top-2 right-2 bg-amber-500 text-white font-semibold">Most Popular</Badge>
               )}
 
               <CardHeader className={`bg-gradient-to-r ${pkg.color} text-white`}>
@@ -101,39 +117,33 @@ export function TicketPackages() {
                   <IconComponent className="h-8 w-8" />
                   <div className="text-right">
                     <CardTitle className="text-2xl font-bold">{pkg.tickets}</CardTitle>
-                    <CardDescription className="text-gray-200">
-                      {pkg.tickets === 1 ? "Ticket" : "Tickets"}
-                    </CardDescription>
+                    <CardDescription className="text-white/90">Tickets</CardDescription>
                   </div>
                 </div>
               </CardHeader>
 
-              <CardContent className="p-6 bg-gray-900">
+              <CardContent className="p-6 bg-white">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-3xl font-bold text-gold">${pkg.price}</span>
-                    {pkg.discount && (
-                      <div className="text-right">
-                        <div className="text-sm text-gray-400 line-through">${originalPrice}</div>
-                        <div className="text-sm text-green-400">Save ${savings}</div>
-                      </div>
-                    )}
+                    <span className="text-3xl font-bold text-amber-600">${pkg.price}</span>
+                    <div className="text-right">
+                      <div className="text-sm text-slate-400 line-through">${pkg.originalPrice}</div>
+                      <div className="text-sm text-emerald-600">Save ${savings}</div>
+                    </div>
                   </div>
-                  {pkg.discount && (
-                    <Badge variant="secondary" className="bg-green-600 text-white">
-                      {pkg.discount}% OFF
-                    </Badge>
-                  )}
-                  <p className="text-sm text-gray-400">${(pkg.price / pkg.tickets).toFixed(2)} per ticket</p>
+                  <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                    {Math.round((savings / pkg.originalPrice) * 100)}% OFF
+                  </Badge>
+                  <p className="text-sm text-slate-500">${(pkg.price / pkg.tickets).toFixed(2)} per ticket</p>
                 </div>
               </CardContent>
 
-              <CardFooter className="p-6 bg-gray-900">
+              <CardFooter className="p-6 bg-white">
                 <Button
                   className={`w-full transition-all duration-300 ${
                     selectedPackage === pkg.id
-                      ? "bg-gold hover:bg-gold/90 text-black"
-                      : "bg-gray-700 hover:bg-gold hover:text-black text-white"
+                      ? "bg-amber-500 hover:bg-amber-600 text-white"
+                      : "bg-slate-100 hover:bg-amber-500 hover:text-white text-slate-700 border border-slate-200"
                   }`}
                 >
                   {selectedPackage === pkg.id ? "Selected" : "Select Package"}
@@ -144,73 +154,177 @@ export function TicketPackages() {
         })}
       </div>
 
-      {/* Custom Package */}
-      <Card className="border-2 border-gold bg-gray-900">
-        <CardHeader className="bg-gradient-to-r from-gold to-yellow-600 text-black">
-          <CardTitle className="text-2xl font-bold flex items-center gap-2">
-            <Sparkles className="h-6 w-6" />
-            Custom Package
+      <Card className="bg-white border-amber-200 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-amber-400 to-amber-500 text-white">
+          <CardTitle className="text-xl font-bold flex items-center gap-2">
+            <Shuffle className="h-6 w-6" />
+            Draw Lucky Numbers
           </CardTitle>
-          <CardDescription className="text-gray-800">Choose your own number of tickets</CardDescription>
+          <CardDescription className="text-white/90">Generate random ticket numbers</CardDescription>
         </CardHeader>
 
         <CardContent className="p-6">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="custom-tickets" className="text-white">
+          <div className="flex gap-4 items-end">
+            <div className="flex-1">
+              <Label htmlFor="lucky-amount" className="text-slate-700 text-sm">
                 Number of Tickets
               </Label>
               <Input
-                id="custom-tickets"
+                id="lucky-amount"
                 type="number"
                 min="1"
                 max="10000"
-                value={customTickets}
-                onChange={(e) => setCustomTickets(e.target.value)}
-                placeholder="Enter number of tickets"
-                className="mt-1 bg-gray-800 border-gray-700 text-white"
+                value={luckyNumberAmount}
+                onChange={(e) => setLuckyNumberAmount(e.target.value)}
+                placeholder="Enter amount"
+                className="mt-1 bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-400"
               />
             </div>
-
-            {customTickets && Number.parseInt(customTickets) > 0 && (
-              <div className="p-4 bg-gray-800 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-white">Total Price:</span>
-                  <span className="text-2xl font-bold text-gold">${customPrice}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm text-gray-400">
-                  <span>Price per ticket:</span>
-                  <span>${(customPrice / Number.parseInt(customTickets)).toFixed(2)}</span>
-                </div>
-                {Number.parseInt(customTickets) > 1 && (
-                  <div className="flex justify-between items-center text-sm text-green-400">
-                    <span>You save:</span>
-                    <span>${Number.parseInt(customTickets) * 5 - customPrice}</span>
-                  </div>
-                )}
-              </div>
-            )}
+            <Button
+              onClick={generateLuckyNumbers}
+              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold"
+              disabled={!luckyNumberAmount || Number.parseInt(luckyNumberAmount) <= 0}
+            >
+              <Shuffle className="h-4 w-4 mr-2" />
+              Generate
+            </Button>
           </div>
-        </CardContent>
 
-        <CardFooter className="p-6">
-          <Button
-            className="w-full bg-gold hover:bg-gold/90 text-black font-semibold"
-            disabled={!customTickets || Number.parseInt(customTickets) <= 0}
-          >
-            Select Custom Package
-          </Button>
-        </CardFooter>
+          {generatedNumbers.length > 0 && (
+            <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+              <h4 className="text-amber-700 font-semibold mb-2">Generated Numbers:</h4>
+              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                {generatedNumbers.map((number) => (
+                  <Badge key={number} className="bg-amber-500 text-white">
+                    {number}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
       </Card>
 
-      {/* Purchase Button */}
-      {(selectedPackage || (customTickets && Number.parseInt(customTickets) > 0)) && (
-        <div className="text-center">
+      <div className="mt-12">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-slate-800 mb-4">
+            Available <span className="text-amber-600">Ticket Numbers</span>
+          </h2>
+          <p className="text-slate-600">10,000 tickets available - Choose your lucky numbers!</p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 10 }, (_, i) => {
+            const startNum = i * 1000
+            const endNum = startNum + 999
+            const availableTickets = Math.floor(Math.random() * 200) + 800
+
+            return (
+              <Dialog key={i}>
+                <DialogTrigger asChild>
+                  <Card className="bg-slate-50 border-slate-200 hover:border-amber-400 transition-all duration-300 cursor-pointer hover:scale-105 shadow-md hover:shadow-lg">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg text-slate-700 text-center">
+                        {startNum.toString().padStart(4, "0")} - {endNum.toString().padStart(4, "0")}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-slate-800">{availableTickets}</div>
+                        <div className="text-sm text-slate-500">Available</div>
+                        <div className="w-full bg-slate-200 rounded-full h-2 mt-2">
+                          <div
+                            className="bg-amber-500 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${(availableTickets / 1000) * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </DialogTrigger>
+
+                <DialogContent className="max-w-4xl max-h-[80vh] bg-white border-slate-200">
+                  <DialogHeader>
+                    <DialogTitle className="text-amber-600 text-xl">
+                      Tickets {startNum.toString().padStart(4, "0")} - {endNum.toString().padStart(4, "0")}
+                    </DialogTitle>
+                  </DialogHeader>
+
+                  <div className="overflow-y-auto max-h-[60vh]">
+                    <div className="grid grid-cols-10 gap-2 p-4">
+                      {generateTicketNumbers(i).map((ticket) => (
+                        <Button
+                          key={ticket.number}
+                          variant={ticket.available ? "outline" : "secondary"}
+                          size="sm"
+                          className={`h-8 text-xs ${
+                            ticket.available
+                              ? selectedTickets.includes(ticket.number)
+                                ? "bg-amber-500 text-white border-amber-500"
+                                : "border-slate-300 text-slate-700 bg-white hover:bg-amber-500 hover:text-white hover:border-amber-500"
+                              : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                          }`}
+                          disabled={!ticket.available}
+                          onClick={() => ticket.available && toggleTicketSelection(ticket.number)}
+                        >
+                          {ticket.number}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-4 border-t border-slate-200">
+                    <div className="flex gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 border border-slate-300 bg-white rounded"></div>
+                        <span className="text-slate-600">Available</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-slate-200 rounded"></div>
+                        <span className="text-slate-600">Sold</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-amber-500 rounded"></div>
+                        <span className="text-slate-600">Selected</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <p className="text-amber-600 font-semibold">{availableTickets} tickets available</p>
+                      {selectedTickets.filter((ticket) => {
+                        const ticketNum = Number.parseInt(ticket)
+                        return ticketNum >= startNum && ticketNum <= endNum
+                      }).length > 0 && (
+                        <Button
+                          onClick={() => handlePurchaseFromTable(generateTicketNumbers(i).map((t) => t.number))}
+                          className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                          size="sm"
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-1" />
+                          Purchase Selected
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )
+          })}
+        </div>
+      </div>
+
+      {(selectedPackage || selectedTickets.length > 0) && (
+        <div className="text-center space-y-4">
+          {selectedTickets.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+              <h4 className="text-amber-700 font-semibold mb-2">Selected Tickets: {selectedTickets.length}</h4>
+              <p className="text-slate-700">Total: ${selectedTickets.length * 20}</p>
+            </div>
+          )}
           <Button
             size="lg"
-            className="bg-gradient-to-r from-gold to-yellow-600 hover:from-gold/90 hover:to-yellow-600/90 text-black font-bold px-12 py-4 text-lg"
+            className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold px-12 py-4 text-lg shadow-lg"
           >
-            Proceed to Checkout
+            {selectedTickets.length > 0 ? "Save and Buy Selected Tickets" : "Proceed to Checkout"}
           </Button>
         </div>
       )}

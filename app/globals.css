@@ -1,7 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
+@import "tailwindcss";
+@import "tw-animate-css";
 
 :root {
   /* Premium light theme with enhanced gold accents */
