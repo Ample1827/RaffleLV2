@@ -49,6 +49,9 @@ export function Navbar() {
             <Link href="/verify-tickets" className="text-gray-300 hover:text-gold transition-colors duration-300">
               Verificar Boletos
             </Link>
+            <Link href="/pagos" className="text-gray-300 hover:text-gold transition-colors duration-300">
+              Pagos
+            </Link>
             <button
               onClick={handleContactClick}
               className="text-gray-300 hover:text-gold transition-colors duration-300"
@@ -90,6 +93,13 @@ export function Navbar() {
                 onClick={() => setIsOpen(false)}
               >
                 Verificar Boletos
+              </Link>
+              <Link
+                href="/pagos"
+                className="text-gray-300 hover:text-gold transition-colors duration-300"
+                onClick={() => setIsOpen(false)}
+              >
+                Pagos
               </Link>
               <button
                 onClick={handleContactClick}
