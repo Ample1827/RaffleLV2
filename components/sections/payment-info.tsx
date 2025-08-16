@@ -161,7 +161,17 @@ export function PaymentInfo() {
               <p className="text-gray-700 text-lg">
                 Si tienes alguna duda sobre el proceso de pago, no dudes en contactarnos.
               </p>
-              <Button className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-300">
+
+              <Button
+                onClick={() =>
+                  window.open(
+                    "https://wa.me/526642709153?text=" +
+                      encodeURIComponent("Hola, necesito ayuda con mi compra."),
+                    "_blank"
+                  )
+                }
+                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-300"
+              >
                 Contactar Soporte
               </Button>
             </div>
