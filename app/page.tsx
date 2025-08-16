@@ -20,11 +20,11 @@ export default function LandingPage() {
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
                 <span className="bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent">
-                  Choose Your Ticket Package
+                  Elige Tu Paquete de Boletos
                 </span>
               </h2>
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                Select from our premium packages or generate lucky numbers
+                Selecciona de nuestros paquetes premium o genera números de la suerte
               </p>
             </div>
             <TicketPackages />

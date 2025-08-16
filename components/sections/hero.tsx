@@ -45,17 +45,17 @@ export function Hero() {
                   <Star key={i} className="h-5 w-5 text-primary fill-current" />
                 ))}
               </div>
-              <span className="text-muted-foreground">Trusted by 50,000+ players</span>
+              <span className="text-muted-foreground">Confiado por más de 50,000 jugadores</span>
             </div>
 
             <h1 className="text-4xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
-              Win Amazing Prizes with
-              <span className="text-primary"> Every Ticket</span>
+              Gana Premios Increíbles con
+              <span className="text-primary"> Cada Boleto</span>
             </h1>
 
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-              Join thousands of winners in our exciting raffles. From luxury cars to dream vacations, your next big win
-              is just one ticket away!
+              ¡Únete a miles de ganadores en nuestras emocionantes rifas! Desde autos de lujo hasta vacaciones de
+              ensueño, tu próxima gran victoria está a solo un boleto de distancia.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
@@ -64,7 +64,7 @@ export function Hero() {
                 className="bg-primary hover:bg-primary/90 text-lg px-8 py-4"
                 onClick={() => (window.location.href = "/buy-tickets")}
               >
-                Buy Tickets Now
+                Comprar Boletos Ahora
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button
@@ -80,7 +80,7 @@ export function Hero() {
                   }, 500)
                 }}
               >
-                🎲 Draw Lucky Numbers
+                🎲 Sortear Números de la Suerte
               </Button>
             </div>
 
@@ -91,29 +91,29 @@ export function Hero() {
                   <Trophy className="h-6 w-6 text-primary" />
                   <span className="text-2xl font-bold text-foreground">$2M+</span>
                 </div>
-                <p className="text-muted-foreground">Prizes Won</p>
+                <p className="text-muted-foreground">Premios Ganados</p>
               </div>
               <div>
                 <div className="flex items-center justify-center lg:justify-start space-x-2 mb-2">
                   <Users className="h-6 w-6 text-primary" />
                   <span className="text-2xl font-bold text-foreground">50K+</span>
                 </div>
-                <p className="text-muted-foreground">Happy Winners</p>
+                <p className="text-muted-foreground">Ganadores Felices</p>
               </div>
               <div>
                 <div className="flex items-center justify-center lg:justify-start space-x-2 mb-2">
                   <Star className="h-6 w-6 text-primary" />
                   <span className="text-2xl font-bold text-foreground">4.9/5</span>
                 </div>
-                <p className="text-muted-foreground">Rating</p>
+                <p className="text-muted-foreground">Calificación</p>
               </div>
             </div>
           </div>
 
           <div className="relative">
             <div className="bg-white rounded-2xl shadow-2xl p-6 border border-slate-200">
-              <h3 className="text-2xl font-bold text-slate-800 mb-4 text-center">Available Tickets</h3>
-              <p className="text-slate-600 text-center mb-6">10,000 Total Tickets</p>
+              <h3 className="text-2xl font-bold text-slate-800 mb-4 text-center">Boletos Disponibles</h3>
+              <p className="text-slate-600 text-center mb-6">10,000 Boletos Totales</p>
 
               <div className="grid grid-cols-2 gap-3">
                 {ticketSections.map((section) => (
@@ -126,7 +126,7 @@ export function Hero() {
                       <div className="font-bold text-slate-800 text-sm mb-1 group-hover:text-amber-600 transition-colors">
                         {section.range}
                       </div>
-                      <div className="text-xs text-slate-600 mb-2">{section.available} Available</div>
+                      <div className="text-xs text-slate-600 mb-2">{section.available} Disponibles</div>
                       <div className="w-full bg-slate-200 rounded-full h-1.5">
                         <div
                           className="bg-green-500 h-1.5 rounded-full transition-all group-hover:bg-amber-500"
@@ -142,12 +142,14 @@ export function Hero() {
               </div>
 
               <div className="mt-6 text-center">
-                <p className="text-sm text-slate-500 mb-3">Click any section to view and select tickets</p>
+                <p className="text-sm text-slate-500 mb-3">
+                  Haz clic en cualquier sección para ver y seleccionar boletos
+                </p>
                 <Button
                   className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold"
                   onClick={() => (window.location.href = "/buy-tickets")}
                 >
-                  View All Tickets
+                  Ver Todos los Boletos
                 </Button>
               </div>
             </div>

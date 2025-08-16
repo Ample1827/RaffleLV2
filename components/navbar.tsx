@@ -44,20 +44,20 @@ export function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             <Link href="/buy-tickets" className="text-gray-300 hover:text-gold transition-colors duration-300">
-              Buy Tickets
+              Comprar Boletos
             </Link>
             <Link href="/verify-tickets" className="text-gray-300 hover:text-gold transition-colors duration-300">
-              Verify Tickets
+              Verificar Boletos
             </Link>
             <button
               onClick={handleContactClick}
               className="text-gray-300 hover:text-gold transition-colors duration-300"
             >
-              Contact
+              Contacto
             </button>
             <Link href="/login">
               <Button className="bg-white text-black hover:bg-gray-100 transition-all duration-300 shadow-lg">
-                Login
+                Iniciar Sesión
               </Button>
             </Link>
           </div>
@@ -82,25 +82,25 @@ export function Navbar() {
                 className="text-gray-300 hover:text-gold transition-colors duration-300"
                 onClick={() => setIsOpen(false)}
               >
-                Buy Tickets
+                Comprar Boletos
               </Link>
               <Link
                 href="/verify-tickets"
                 className="text-gray-300 hover:text-gold transition-colors duration-300"
                 onClick={() => setIsOpen(false)}
               >
-                Verify Tickets
+                Verificar Boletos
               </Link>
               <button
                 onClick={handleContactClick}
                 className="text-gray-300 hover:text-gold transition-colors duration-300 text-left"
               >
-                Contact
+                Contacto
               </button>
               <div className="flex flex-col space-y-2 pt-4">
                 <Link href="/login" onClick={() => setIsOpen(false)}>
                   <Button className="bg-white text-black hover:bg-gray-100 transition-all duration-300 w-full shadow-lg">
-                    Login
+                    Iniciar Sesión
                   </Button>
                 </Link>
               </div>

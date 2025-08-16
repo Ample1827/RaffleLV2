@@ -5,26 +5,28 @@ export function HowItWorks() {
   const steps = [
     {
       icon: <CreditCard className="h-12 w-12 text-purple-600" />,
-      title: "Choose Your Tickets",
-      description: "Browse our exciting raffles and select the number of tickets you want to purchase.",
+      title: "Elige Tus Boletos",
+      description: "Explora nuestras emocionantes rifas y selecciona el número de boletos que deseas comprar.",
       step: "01",
     },
     {
       icon: <Ticket className="h-12 w-12 text-purple-600" />,
-      title: "Secure Your Entry",
-      description: "Complete your purchase with our secure payment system and get your unique ticket numbers.",
+      title: "Asegura Tu Participación",
+      description: "Completa tu compra con nuestro sistema de pago seguro y obtén tus números de boleto únicos.",
       step: "02",
     },
     {
       icon: <Trophy className="h-12 w-12 text-purple-600" />,
-      title: "Wait for the Draw",
-      description: "Sit back and relax while we conduct fair and transparent draws using certified random systems.",
+      title: "Espera el Sorteo",
+      description:
+        "Relájate mientras realizamos sorteos justos y transparentes usando sistemas aleatorios certificados.",
       step: "03",
     },
     {
       icon: <Gift className="h-12 w-12 text-purple-600" />,
-      title: "Claim Your Prize",
-      description: "Winners are notified immediately and can claim their prizes through our simple process.",
+      title: "Reclama Tu Premio",
+      description:
+        "Los ganadores son notificados inmediatamente y pueden reclamar sus premios a través de nuestro proceso simple.",
       step: "04",
     },
   ]
@@ -33,9 +35,10 @@ export function HowItWorks() {
     <section id="how-it-works" className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-6">How It Works</h2>
+          <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-6">Cómo Funciona</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Winning is simple! Follow these easy steps to join our raffles and start your journey to amazing prizes.
+            ¡Ganar es simple! Sigue estos pasos fáciles para unirte a nuestras rifas y comenzar tu camino hacia premios
+            increíbles.
           </p>
         </div>
 
