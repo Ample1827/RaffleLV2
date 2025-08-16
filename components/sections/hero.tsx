@@ -20,17 +20,7 @@ export function Hero() {
   })
 
   const handleTicketBoxClick = (sectionIndex: number) => {
-    window.location.href = `/buy-tickets#section-${sectionIndex}`
-    // Small delay to ensure page loads before scrolling to section
-    setTimeout(() => {
-      const sectionElement = document.querySelector(`[data-section="${sectionIndex}"]`)
-      if (sectionElement) {
-        sectionElement.scrollIntoView({ behavior: "smooth" })
-        // Trigger click on the section to open the dialog
-        const sectionCard = sectionElement as HTMLElement
-        if (sectionCard) sectionCard.click()
-      }
-    }, 500)
+    window.location.href = `/buy-tickets?section=${sectionIndex}`
   }
 
   return (
@@ -66,21 +56,6 @@ export function Hero() {
               >
                 Comprar Boletos Ahora
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground text-lg px-8 py-4 bg-transparent"
-                onClick={() => {
-                  window.location.href = "/buy-tickets"
-                  // Small delay to ensure page loads before triggering the lucky numbers dialog
-                  setTimeout(() => {
-                    const luckyButton = document.querySelector("[data-lucky-numbers-trigger]") as HTMLElement
-                    if (luckyButton) luckyButton.click()
-                  }, 500)
-                }}
-              >
-                🎲 Sortear Números de la Suerte
               </Button>
             </div>
 

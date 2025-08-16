@@ -1,13 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Star, Zap, Sparkles, Shuffle, ShoppingCart } from "lucide-react"
 
 const ticketPackages = [
@@ -84,6 +83,7 @@ export function TicketPackages() {
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false)
   const [showLuckyDialog, setShowLuckyDialog] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [openSectionDialog, setOpenSectionDialog] = useState<number | null>(null)
   const [purchaseForm, setPurchaseForm] = useState({
     firstName: "",
     lastName: "",
@@ -91,6 +91,19 @@ export function TicketPackages() {
     state: "",
     promoCode: "",
   })
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const sectionParam = urlParams.get("section")
+
+    if (sectionParam !== null) {
+      const sectionIndex = Number.parseInt(sectionParam)
+      if (sectionIndex >= 0 && sectionIndex <= 9) {
+        setOpenSectionDialog(sectionIndex)
+        window.history.replaceState({}, "", window.location.pathname)
+      }
+    }
+  }, [])
 
   const handlePackageSelect = (packageId: number) => {
     setSelectedPackage(packageId)
@@ -129,7 +142,6 @@ export function TicketPackages() {
 
     setIsGenerating(true)
 
-    // Casino slot animation delay
     setTimeout(() => {
       const numbers = new Set<string>()
       while (numbers.size < amount) {
@@ -140,7 +152,7 @@ export function TicketPackages() {
       setGeneratedNumbers(Array.from(numbers))
       setSelectedTickets(Array.from(numbers))
       setIsGenerating(false)
-    }, 3000) // 3 second animation
+    }, 3000)
   }
 
   const toggleTicketSelection = (ticketNumber: string) => {
@@ -157,7 +169,7 @@ export function TicketPackages() {
       const ticketNumber = startNum + i
       tickets.push({
         number: ticketNumber.toString().padStart(4, "0"),
-        available: true, // All tickets are now available
+        available: true,
       })
     }
 
@@ -382,157 +394,6 @@ export function TicketPackages() {
         </Dialog>
       </div>
 
-      {/* Purchase Dialog */}
-      <Dialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog}>
-        <DialogContent className="max-w-2xl bg-white border-slate-200">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-slate-800 mb-2">Resumen de boletos a reservar</DialogTitle>
-            <p className="text-slate-600">Revisa los boletos seleccionados y completa el formulario para continuar.</p>
-          </DialogHeader>
-
-          <div className="space-y-6">
-            {/* Selected Tickets Summary */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <h3 className="font-semibold text-amber-700 mb-2">
-                {selectedPackage ? getSelectedPackageInfo()?.tickets : selectedTickets.length} Boletos Seleccionados
-              </h3>
-              {selectedPackage && (
-                <p className="text-slate-600">
-                  Paquete: {getSelectedPackageInfo()?.tickets} boletos por ${getSelectedPackageInfo()?.price}
-                </p>
-              )}
-              {selectedTickets.length > 0 && !selectedPackage && (
-                <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-                  {selectedTickets.map((ticket) => (
-                    <Badge key={ticket} variant="secondary" className="text-xs">
-                      {ticket}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Form */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="firstName" className="text-slate-700">
-                  Nombre
-                </Label>
-                <Input
-                  id="firstName"
-                  value={purchaseForm.firstName}
-                  onChange={(e) => handleFormChange("firstName", e.target.value)}
-                  className="mt-1 bg-slate-50 border-slate-200"
-                  placeholder="Ingresa tu nombre"
-                />
-              </div>
-              <div>
-                <Label htmlFor="lastName" className="text-slate-700">
-                  Apellido
-                </Label>
-                <Input
-                  id="lastName"
-                  value={purchaseForm.lastName}
-                  onChange={(e) => handleFormChange("lastName", e.target.value)}
-                  className="mt-1 bg-slate-50 border-slate-200"
-                  placeholder="Ingresa tu apellido"
-                />
-              </div>
-              <div>
-                <Label htmlFor="phoneNumber" className="text-slate-700">
-                  Número de Teléfono
-                </Label>
-                <Input
-                  id="phoneNumber"
-                  value={purchaseForm.phoneNumber}
-                  onChange={(e) => handleFormChange("phoneNumber", e.target.value)}
-                  className="mt-1 bg-slate-50 border-slate-200"
-                  placeholder="Ingresa tu número de teléfono"
-                />
-              </div>
-              <div>
-                <Label htmlFor="state" className="text-slate-700">
-                  Estado
-                </Label>
-                <Select value={purchaseForm.state} onValueChange={(value) => handleFormChange("state", value)}>
-                  <SelectTrigger className="mt-1 bg-slate-50 border-slate-200">
-                    <SelectValue placeholder="Selecciona tu estado" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-slate-200 max-h-60">
-                    {mexicanStates.map((state) => (
-                      <SelectItem key={state} value={state} className="hover:bg-slate-50">
-                        {state}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="md:col-span-2">
-                <Label htmlFor="promoCode" className="text-slate-700">
-                  Código Promocional
-                </Label>
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    id="promoCode"
-                    value={purchaseForm.promoCode}
-                    onChange={(e) => handleFormChange("promoCode", e.target.value)}
-                    className="bg-slate-50 border-slate-200"
-                    placeholder="Ingresa código promocional"
-                  />
-                  <Button
-                    onClick={applyPromoCode}
-                    variant="outline"
-                    className="border-slate-200 hover:bg-amber-50 hover:border-amber-300 bg-transparent"
-                  >
-                    Aplicar
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Summary */}
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-              <h3 className="font-semibold text-slate-800 mb-3">Resumen</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Boletos:</span>
-                  <span className="font-medium">
-                    {selectedPackage ? getSelectedPackageInfo()?.tickets : selectedTickets.length}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Precio por boleto:</span>
-                  <span className="font-medium">$20.00</span>
-                </div>
-                <div className="border-t border-slate-200 pt-2 flex justify-between">
-                  <span className="font-semibold text-slate-800">Total:</span>
-                  <span className="font-bold text-amber-600 text-lg">
-                    ${selectedPackage ? getSelectedPackageInfo()?.price : selectedTickets.length * 20}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-4 pt-4">
-              <Button
-                onClick={handleCancel}
-                variant="outline"
-                className="flex-1 border-slate-200 hover:bg-slate-50 bg-transparent"
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handlePayNow}
-                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-semibold"
-              >
-                Pagar Ahora
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       <div className="mt-12">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-slate-800 mb-4">
@@ -548,11 +409,19 @@ export function TicketPackages() {
             const availableTickets = 1000
 
             return (
-              <Dialog key={i}>
+              <Dialog
+                key={i}
+                open={openSectionDialog === i}
+                onOpenChange={(open) => {
+                  if (!open) setOpenSectionDialog(null)
+                  else setOpenSectionDialog(i)
+                }}
+              >
                 <DialogTrigger asChild>
                   <Card
                     className="bg-slate-50 border-slate-200 hover:border-amber-400 transition-all duration-300 cursor-pointer hover:scale-105 shadow-md hover:shadow-lg"
                     data-section={i}
+                    onClick={() => setOpenSectionDialog(i)}
                   >
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg text-slate-700 text-center">
