@@ -31,7 +31,9 @@ export default function LoginPage() {
               </svg>
             </div>
             <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">Bienvenido de vuelta</h2>
-            <p className="mt-2 text-sm text-gray-600">Ingresa tu email y contraseña para acceder a tu cuenta</p>
+            <p className="mt-2 text-sm text-gray-600">
+              Ingresa tu número de teléfono y contraseña para acceder a tu cuenta
+            </p>
           </div>
 
           <div className="rounded-lg bg-white p-8 shadow-lg">

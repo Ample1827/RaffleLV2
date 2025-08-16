@@ -78,6 +78,7 @@ export function TicketPackages() {
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null)
   const [selectedSection, setSelectedSection] = useState<number | null>(null)
   const [selectedTickets, setSelectedTickets] = useState<string[]>([])
+  const [assignedPackageTickets, setAssignedPackageTickets] = useState<string[]>([])
   const [luckyNumberAmount, setLuckyNumberAmount] = useState("")
   const [generatedNumbers, setGeneratedNumbers] = useState<string[]>([])
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false)
@@ -107,6 +108,12 @@ export function TicketPackages() {
 
   const handlePackageSelect = (packageId: number) => {
     setSelectedPackage(packageId)
+    const pkg = ticketPackages.find((p) => p.id === packageId)
+    if (pkg) {
+      const assignedTickets = generateConsecutiveTickets(pkg.tickets)
+      setAssignedPackageTickets(assignedTickets)
+      setSelectedTickets(assignedTickets)
+    }
   }
 
   const handleBuyNow = () => {
@@ -133,7 +140,7 @@ export function TicketPackages() {
   }
 
   const handlePayNow = () => {
-    alert("Procesando pago...")
+    window.location.href = "/login"
   }
 
   const generateLuckyNumbers = () => {
@@ -148,6 +155,9 @@ export function TicketPackages() {
         const randomNum = Math.floor(Math.random() * 10000)
         numbers.add(randomNum.toString().padStart(4, "0"))
       }
+
+      setSelectedPackage(null)
+      setAssignedPackageTickets([])
 
       setGeneratedNumbers(Array.from(numbers))
       setSelectedTickets(Array.from(numbers))
@@ -190,6 +200,15 @@ export function TicketPackages() {
   const handleSaveAndBuyLucky = () => {
     setShowLuckyDialog(false)
     setShowPurchaseDialog(true)
+  }
+
+  const generateConsecutiveTickets = (count: number): string[] => {
+    const startNumber = Math.floor(Math.random() * (10000 - count))
+    const tickets = []
+    for (let i = 0; i < count; i++) {
+      tickets.push((startNumber + i).toString().padStart(4, "0"))
+    }
+    return tickets
   }
 
   return (
@@ -274,6 +293,24 @@ export function TicketPackages() {
                     {Math.round((savings / pkg.originalPrice) * 100)}% DESC
                   </Badge>
                   <p className="text-sm text-slate-500">${(pkg.price / pkg.tickets).toFixed(2)} por boleto</p>
+
+                  {selectedPackage === pkg.id && assignedPackageTickets.length > 0 && (
+                    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-sm font-semibold text-amber-700 mb-2">Tus Boletos Asignados:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {assignedPackageTickets.slice(0, 6).map((ticket) => (
+                          <Badge key={ticket} variant="secondary" className="bg-amber-100 text-amber-800 text-xs">
+                            {ticket}
+                          </Badge>
+                        ))}
+                        {assignedPackageTickets.length > 6 && (
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-800 text-xs">
+                            +{assignedPackageTickets.length - 6} más
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
 
@@ -520,6 +557,172 @@ export function TicketPackages() {
           </Button>
         </div>
       )}
+
+      <Dialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog}>
+        <DialogContent className="max-w-2xl bg-white border-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-slate-800 mb-4">Resumen de Boletos a Reservar</DialogTitle>
+            <p className="text-slate-600">Revisa los boletos seleccionados y completa el formulario para continuar.</p>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+              <h3 className="font-semibold text-amber-700 mb-2">
+                {selectedPackage
+                  ? `${getSelectedPackageInfo()?.tickets} Boletos Seleccionados`
+                  : `${selectedTickets.length} Boletos Seleccionados`}
+              </h3>
+              {selectedPackage && assignedPackageTickets.length > 0 && (
+                <div className="text-slate-700">
+                  <p className="mb-2">Paquete de {getSelectedPackageInfo()?.tickets} boletos</p>
+                  <div className="bg-white p-3 rounded border">
+                    <p className="text-sm font-medium text-slate-600 mb-2">Números asignados:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {assignedPackageTickets.map((ticket) => (
+                        <Badge key={ticket} className="bg-amber-500 text-white text-xs">
+                          {ticket}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {selectedTickets.length > 0 && !selectedPackage && (
+                <div className="text-slate-700">
+                  <p>
+                    Boletos individuales: {selectedTickets.slice(0, 10).join(", ")}
+                    {selectedTickets.length > 10 && ` y ${selectedTickets.length - 10} más...`}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="firstName" className="text-slate-700">
+                  Nombre
+                </Label>
+                <Input
+                  id="firstName"
+                  value={purchaseForm.firstName}
+                  onChange={(e) => handleFormChange("firstName", e.target.value)}
+                  className="bg-slate-50 border-slate-200"
+                  placeholder="Tu nombre"
+                />
+              </div>
+              <div>
+                <Label htmlFor="lastName" className="text-slate-700">
+                  Apellido
+                </Label>
+                <Input
+                  id="lastName"
+                  value={purchaseForm.lastName}
+                  onChange={(e) => handleFormChange("lastName", e.target.value)}
+                  className="bg-slate-50 border-slate-200"
+                  placeholder="Tu apellido"
+                />
+              </div>
+              <div>
+                <Label htmlFor="phoneNumber" className="text-slate-700">
+                  Número de Teléfono
+                </Label>
+                <Input
+                  id="phoneNumber"
+                  value={purchaseForm.phoneNumber}
+                  onChange={(e) => handleFormChange("phoneNumber", e.target.value)}
+                  className="bg-slate-50 border-slate-200"
+                  placeholder="+52 123 456 7890"
+                />
+              </div>
+              <div>
+                <Label htmlFor="state" className="text-slate-700">
+                  Estado
+                </Label>
+                <select
+                  id="state"
+                  value={purchaseForm.state}
+                  onChange={(e) => handleFormChange("state", e.target.value)}
+                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded-md"
+                >
+                  <option value="">Selecciona tu estado</option>
+                  {mexicanStates.map((state) => (
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Label htmlFor="promoCode" className="text-slate-700">
+                  Código Promocional
+                </Label>
+                <Input
+                  id="promoCode"
+                  value={purchaseForm.promoCode}
+                  onChange={(e) => handleFormChange("promoCode", e.target.value)}
+                  className="bg-slate-50 border-slate-200"
+                  placeholder="Código opcional"
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  onClick={applyPromoCode}
+                  variant="outline"
+                  className="border-amber-300 text-amber-600 hover:bg-amber-50 bg-transparent"
+                >
+                  Aplicar
+                </Button>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
+              <h3 className="font-semibold text-slate-800 mb-2">Resumen del Pedido</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Boletos:</span>
+                  <span>{selectedPackage ? getSelectedPackageInfo()?.tickets : selectedTickets.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Precio por boleto:</span>
+                  <span>
+                    $
+                    {selectedPackage
+                      ? (getSelectedPackageInfo()?.price! / getSelectedPackageInfo()?.tickets!).toFixed(2)
+                      : "20.00"}
+                  </span>
+                </div>
+                <div className="border-t border-slate-300 pt-2">
+                  <div className="flex justify-between font-bold text-lg">
+                    <span>Total:</span>
+                    <span className="text-amber-600">
+                      ${selectedPackage ? getSelectedPackageInfo()?.price : selectedTickets.length * 20}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <Button
+                onClick={handleCancel}
+                variant="outline"
+                className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50 bg-transparent"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handlePayNow}
+                className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold"
+              >
+                Pagar Ahora
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
