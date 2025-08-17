@@ -6,7 +6,7 @@ import { Icons } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
@@ -24,6 +24,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     setError("")
 
     try {
+      const supabase = createClient()
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
@@ -32,7 +33,14 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       if (error) {
         setError(error.message)
       } else {
-        router.push("/dashboard")
+        const urlParams = new URLSearchParams(window.location.search)
+        const hasTickets = urlParams.get("tickets") || sessionStorage.getItem("selectedTickets")
+
+        if (hasTickets) {
+          router.push("/resumen-boletos")
+        } else {
+          router.push("/dashboard")
+        }
       }
     } catch (err) {
       setError("Error al iniciar sesión. Inténtalo de nuevo.")
