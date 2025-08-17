@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { UserDashboard } from "@/components/dashboard/user-dashboard"
+import { AuthProtectedDashboard } from "@/components/dashboard/auth-protected-dashboard"
 
 export const metadata: Metadata = {
   title: "Dashboard - RafflePro",
@@ -8,8 +8,8 @@ export const metadata: Metadata = {
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <UserDashboard />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <AuthProtectedDashboard />
     </div>
   )
 }

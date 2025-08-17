@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button"
 import { Menu, X, Ticket } from "lucide-react"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
+import { useAuth } from "@/components/auth/auth-provider"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
+  const { user, signOut, loading } = useAuth()
 
   const handleContactClick = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -28,6 +30,12 @@ export function Navbar() {
     }
 
     // Close mobile menu if open
+    setIsOpen(false)
+  }
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push("/")
     setIsOpen(false)
   }
 
@@ -58,11 +66,32 @@ export function Navbar() {
             >
               Contacto
             </button>
-            <Link href="/login">
-              <Button className="bg-white text-black hover:bg-gray-100 transition-all duration-300 shadow-lg">
-                Iniciar Sesión
-              </Button>
-            </Link>
+            {!loading && (
+              <>
+                {user ? (
+                  <div className="flex items-center space-x-4">
+                    <Link href="/dashboard">
+                      <Button className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white transition-all duration-300 shadow-lg">
+                        Ver Mis Compras
+                      </Button>
+                    </Link>
+                    <Button
+                      onClick={handleSignOut}
+                      variant="outline"
+                      className="border-white text-white hover:bg-white hover:text-black transition-all duration-300 bg-transparent"
+                    >
+                      Cerrar Sesión
+                    </Button>
+                  </div>
+                ) : (
+                  <Link href="/login">
+                    <Button className="bg-white text-black hover:bg-gray-100 transition-all duration-300 shadow-lg">
+                      Iniciar Sesión
+                    </Button>
+                  </Link>
+                )}
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -107,13 +136,32 @@ export function Navbar() {
               >
                 Contacto
               </button>
-              <div className="flex flex-col space-y-2 pt-4">
-                <Link href="/login" onClick={() => setIsOpen(false)}>
-                  <Button className="bg-white text-black hover:bg-gray-100 transition-all duration-300 w-full shadow-lg">
-                    Iniciar Sesión
-                  </Button>
-                </Link>
-              </div>
+              {!loading && (
+                <div className="flex flex-col space-y-2 pt-4">
+                  {user ? (
+                    <>
+                      <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                        <Button className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white transition-all duration-300 w-full shadow-lg">
+                          Ver Mis Compras
+                        </Button>
+                      </Link>
+                      <Button
+                        onClick={handleSignOut}
+                        variant="outline"
+                        className="border-white text-white hover:bg-white hover:text-black transition-all duration-300 w-full bg-transparent"
+                      >
+                        Cerrar Sesión
+                      </Button>
+                    </>
+                  ) : (
+                    <Link href="/login" onClick={() => setIsOpen(false)}>
+                      <Button className="bg-white text-black hover:bg-gray-100 transition-all duration-300 w-full shadow-lg">
+                        Iniciar Sesión
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

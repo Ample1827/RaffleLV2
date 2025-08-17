@@ -6,25 +6,59 @@ import { Icons } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { supabase } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
 
 interface UserRegisterFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function UserRegisterForm({ className, ...props }: UserRegisterFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
+  const [name, setName] = React.useState("")
+  const [phone, setPhone] = React.useState("")
+  const [password, setPassword] = React.useState("")
+  const [confirmPassword, setConfirmPassword] = React.useState("")
+  const [error, setError] = React.useState("")
+  const router = useRouter()
 
   async function onSubmit(event: React.SyntheticEvent) {
     event.preventDefault()
     setIsLoading(true)
+    setError("")
 
-    setTimeout(() => {
+    if (password !== confirmPassword) {
+      setError("Las contraseñas no coinciden")
       setIsLoading(false)
-    }, 3000)
+      return
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        phone: phone,
+        password: password,
+        options: {
+          data: {
+            full_name: name,
+          },
+        },
+      })
+
+      if (error) {
+        setError(error.message)
+      } else {
+        router.push("/login?message=Cuenta creada exitosamente")
+      }
+    } catch (err) {
+      setError("Error al crear la cuenta. Inténtalo de nuevo.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <div className={cn("grid gap-6", className)} {...props}>
       <form onSubmit={onSubmit}>
         <div className="grid gap-2">
+          {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
           <div className="grid gap-1">
             <Label className="sr-only" htmlFor="name">
               Nombre completo
@@ -37,6 +71,9 @@ export function UserRegisterForm({ className, ...props }: UserRegisterFormProps)
               autoComplete="name"
               autoCorrect="off"
               disabled={isLoading}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
             />
           </div>
           <div className="grid gap-1">
@@ -51,6 +88,9 @@ export function UserRegisterForm({ className, ...props }: UserRegisterFormProps)
               autoComplete="tel"
               autoCorrect="off"
               disabled={isLoading}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
             />
           </div>
           <div className="grid gap-1">
@@ -64,6 +104,9 @@ export function UserRegisterForm({ className, ...props }: UserRegisterFormProps)
               autoCapitalize="none"
               autoComplete="new-password"
               disabled={isLoading}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
             />
           </div>
           <div className="grid gap-1">
@@ -77,6 +120,9 @@ export function UserRegisterForm({ className, ...props }: UserRegisterFormProps)
               autoCapitalize="none"
               autoComplete="new-password"
               disabled={isLoading}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
             />
           </div>
           <Button
@@ -108,11 +154,11 @@ export function UserRegisterForm({ className, ...props }: UserRegisterFormProps)
               />
               <path
                 fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
               />
               <path
                 fill="currentColor"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
               <path
                 fill="currentColor"
