@@ -31,6 +31,7 @@ export default function ResumenBoletosPage() {
   const [purchaseData, setPurchaseData] = useState<PurchaseData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [whatsappMessage, setWhatsappMessage] = useState("")
+  const [saved, setSaved] = useState(false) // ✅ prevents duplicates
   const router = useRouter()
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export default function ResumenBoletosPage() {
 
       setUser(user)
 
-      // Get purchase data from sessionStorage or URL params
+      // Get purchase data from sessionStorage
       const storedData = sessionStorage.getItem("purchaseData")
       if (storedData) {
         const data = JSON.parse(storedData)
@@ -57,7 +58,7 @@ export default function ResumenBoletosPage() {
           userName: `${data.userInfo.firstName} ${data.userInfo.lastName}`,
           ticketCount: data.tickets.length,
           totalAmount: data.totalAmount,
-          supportPhone: "+52 123 456 7890",
+          supportPhone: SUPPORT_PHONE_CLEAN,
           paymentInfoUrl: `${window.location.origin}/pagos`,
         })
         setWhatsappMessage(message)
@@ -70,55 +71,56 @@ export default function ResumenBoletosPage() {
   }, [router])
 
   const savePurchaseToDatabase = async () => {
-    if (!user || !purchaseData) return
+    if (!user || !purchaseData || saved) return
 
     const supabase = createClient()
 
-    // First, create or update user profile
-    const { error: userError } = await supabase.from("users").upsert({
-      id: user.id,
-      email: user.email,
-      name: `${purchaseData.userInfo.firstName} ${purchaseData.userInfo.lastName}`,
-      phone: purchaseData.userInfo.phoneNumber,
-    })
+    try {
+      // ✅ Save/Update user profile
+      const { error: userError } = await supabase.from("users").upsert({
+        id: user.id,
+        email: user.email,
+        name: `${purchaseData.userInfo.firstName} ${purchaseData.userInfo.lastName}`,
+        phone: purchaseData.userInfo.phoneNumber,
+        state: purchaseData.userInfo.state,
+      })
 
-    if (userError) {
-      console.error("Error saving user:", userError)
-      return
-    }
+      if (userError) throw userError
 
-    // Create purchase record
-    const { error: purchaseError } = await supabase.from("purchases").insert({
-      user_id: user.id,
-      ticket_numbers: purchaseData.tickets.map((t) => Number.parseInt(t)),
-      total_amount: purchaseData.totalAmount,
-      status: "pending",
-    })
+      // ✅ Save purchase
+      const { error: purchaseError } = await supabase.from("purchases").insert({
+        user_id: user.id,
+        ticket_numbers: purchaseData.tickets.map((t) => Number.parseInt(t)),
+        total_amount: purchaseData.totalAmount,
+        status: "pending",
+      })
 
-    if (purchaseError) {
-      console.error("Error saving purchase:", purchaseError)
-      return
-    }
+      if (purchaseError) throw purchaseError
 
-    // Mark tickets as unavailable
-    const { error: ticketError } = await supabase
-      .from("tickets")
-      .update({ is_available: false })
-      .in(
-        "ticket_number",
-        purchaseData.tickets.map((t) => Number.parseInt(t)),
-      )
+      // ✅ Update tickets availability
+      const { error: ticketError } = await supabase
+        .from("tickets")
+        .update({ is_available: false })
+        .in(
+          "ticket_number",
+          purchaseData.tickets.map((t) => Number.parseInt(t)),
+        )
 
-    if (ticketError) {
-      console.error("Error updating tickets:", ticketError)
+      if (ticketError) throw ticketError
+
+      setSaved(true) // ✅ prevent re-inserts
+      sessionStorage.removeItem("purchaseData") // optional: clear after saving
+    } catch (err) {
+      console.error("Error saving purchase:", err)
     }
   }
 
+  // ✅ Save to DB only once
   useEffect(() => {
-    if (user && purchaseData) {
+    if (user && purchaseData && !saved) {
       savePurchaseToDatabase()
     }
-  }, [user, purchaseData])
+  }, [user, purchaseData, saved])
 
   if (isLoading) {
     return (
