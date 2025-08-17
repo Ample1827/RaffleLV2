@@ -14,7 +14,7 @@ interface UserRegisterFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 export function UserRegisterForm({ className, ...props }: UserRegisterFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [name, setName] = React.useState("")
-  const [phone, setPhone] = React.useState("")
+  const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [confirmPassword, setConfirmPassword] = React.useState("")
   const [error, setError] = React.useState("")
@@ -33,7 +33,7 @@ export function UserRegisterForm({ className, ...props }: UserRegisterFormProps)
 
     try {
       const { data, error } = await supabase.auth.signUp({
-        phone: phone,
+        email: email,
         password: password,
         options: {
           data: {
@@ -77,19 +77,19 @@ export function UserRegisterForm({ className, ...props }: UserRegisterFormProps)
             />
           </div>
           <div className="grid gap-1">
-            <Label className="sr-only" htmlFor="phone">
-              Número de teléfono
+            <Label className="sr-only" htmlFor="email">
+              Correo electrónico
             </Label>
             <Input
-              id="phone"
-              placeholder="+52 123 456 7890"
-              type="tel"
+              id="email"
+              placeholder="correo@ejemplo.com"
+              type="email"
               autoCapitalize="none"
-              autoComplete="tel"
+              autoComplete="email"
               autoCorrect="off"
               disabled={isLoading}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
