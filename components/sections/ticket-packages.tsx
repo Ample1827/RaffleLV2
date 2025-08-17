@@ -140,7 +140,15 @@ export function TicketPackages() {
   }
 
   const handlePayNow = () => {
-    window.location.href = "/login"
+    const purchaseData = {
+      tickets: selectedTickets,
+      totalAmount: selectedPackage ? getSelectedPackageInfo()?.price : selectedTickets.length * 20,
+      packageInfo: selectedPackage ? getSelectedPackageInfo() : undefined,
+      userInfo: purchaseForm,
+    }
+
+    sessionStorage.setItem("purchaseData", JSON.stringify(purchaseData))
+    window.location.href = "/login?tickets=true"
   }
 
   const generateLuckyNumbers = () => {
