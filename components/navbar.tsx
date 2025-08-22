@@ -46,7 +46,7 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <Ticket className="h-8 w-8 text-gold" />
-            <span className="text-2xl font-bold text-white">RafflePro</span>
+            <span className="text-2xl font-bold text-white">Rifa Romero</span>
           </Link>
 
           {/* Desktop Navigation */}
