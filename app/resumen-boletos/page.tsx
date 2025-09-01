@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Navbar } from "@/components/navbar"
 import { CheckCircle, Clock, ExternalLink } from "lucide-react"
-import { WhatsAppButton } from "@/components/whatsapp/whatsapp-button"
-import { generatePurchaseWhatsAppMessage, SUPPORT_PHONE_CLEAN } from "@/lib/whatsapp"
+import { createPurchase } from "@/lib/database"
 
 interface PurchaseData {
   tickets: string[]
@@ -30,7 +29,7 @@ export default function ResumenBoletosPage() {
   const [user, setUser] = useState<any>(null)
   const [purchaseData, setPurchaseData] = useState<PurchaseData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [whatsappMessage, setWhatsappMessage] = useState("")
+  const [purchaseCreated, setPurchaseCreated] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -40,27 +39,23 @@ export default function ResumenBoletosPage() {
         data: { user },
       } = await supabase.auth.getUser()
 
+      console.log("[v0] Checking user in resumen boletos:", user)
+
       if (!user) {
+        console.log("[v0] No user found, redirecting to login")
         router.push("/login")
         return
       }
 
       setUser(user)
 
-      // Get purchase data from sessionStorage or URL params
       const storedData = sessionStorage.getItem("purchaseData")
       if (storedData) {
         const data = JSON.parse(storedData)
+        console.log("[v0] Purchase data found:", data)
         setPurchaseData(data)
-
-        const message = generatePurchaseWhatsAppMessage({
-          userName: `${data.userInfo.firstName} ${data.userInfo.lastName}`,
-          ticketCount: data.tickets.length,
-          totalAmount: data.totalAmount,
-          supportPhone: "+52 123 456 7890",
-          paymentInfoUrl: `${window.location.origin}/pagos`,
-        })
-        setWhatsappMessage(message)
+      } else {
+        console.log("[v0] No purchase data found")
       }
 
       setIsLoading(false)
@@ -70,55 +65,33 @@ export default function ResumenBoletosPage() {
   }, [router])
 
   const savePurchaseToDatabase = async () => {
-    if (!user || !purchaseData) return
+    if (!user || !purchaseData || purchaseCreated) return
 
-    const supabase = createClient()
+    try {
+      console.log("[v0] Creating purchase in database...")
 
-    // First, create or update user profile
-    const { error: userError } = await supabase.from("users").upsert({
-      id: user.id,
-      email: user.email,
-      name: `${purchaseData.userInfo.firstName} ${purchaseData.userInfo.lastName}`,
-      phone: purchaseData.userInfo.phoneNumber,
-    })
+      const purchase = await createPurchase({
+        ticket_numbers: purchaseData.tickets,
+        quantity: purchaseData.tickets.length,
+        total_amount: purchaseData.totalAmount,
+      })
 
-    if (userError) {
-      console.error("Error saving user:", userError)
-      return
-    }
+      console.log("[v0] Purchase created successfully:", purchase)
+      setPurchaseCreated(true)
 
-    // Create purchase record
-    const { error: purchaseError } = await supabase.from("purchases").insert({
-      user_id: user.id,
-      ticket_numbers: purchaseData.tickets.map((t) => Number.parseInt(t)),
-      total_amount: purchaseData.totalAmount,
-      status: "pending",
-    })
-
-    if (purchaseError) {
-      console.error("Error saving purchase:", purchaseError)
-      return
-    }
-
-    // Mark tickets as unavailable
-    const { error: ticketError } = await supabase
-      .from("tickets")
-      .update({ is_available: false })
-      .in(
-        "ticket_number",
-        purchaseData.tickets.map((t) => Number.parseInt(t)),
-      )
-
-    if (ticketError) {
-      console.error("Error updating tickets:", ticketError)
+      // Clear the session storage after successful creation
+      sessionStorage.removeItem("purchaseData")
+    } catch (error) {
+      console.error("[v0] Error creating purchase:", error)
+      alert("Error al crear la compra. Por favor, contacta al soporte.")
     }
   }
 
   useEffect(() => {
-    if (user && purchaseData) {
+    if (user && purchaseData && !purchaseCreated) {
       savePurchaseToDatabase()
     }
-  }, [user, purchaseData])
+  }, [user, purchaseData, purchaseCreated])
 
   if (isLoading) {
     return (
@@ -208,17 +181,17 @@ export default function ResumenBoletosPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                  <Badge variant="secondary" className="bg-gray-100 text-gray-700">
                     Pendiente
                   </Badge>
-                  <span className="text-sm text-slate-600">Esperando confirmación de pago</span>
+                  <span className="text-sm text-slate-600">Esperando aprobación del administrador</span>
                 </div>
                 <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
                   <p className="text-sm text-amber-700 font-medium mb-2">Próximos pasos:</p>
                   <ol className="text-sm text-amber-600 space-y-1 list-decimal list-inside">
                     <li>Realiza la transferencia bancaria</li>
                     <li>Envía el comprobante por WhatsApp</li>
-                    <li>Espera la confirmación (24 horas)</li>
+                    <li>Espera la aprobación del administrador</li>
                   </ol>
                 </div>
               </CardContent>
@@ -246,14 +219,6 @@ export default function ResumenBoletosPage() {
               <ExternalLink className="h-4 w-4 mr-2" />
               Ver Información de Pago
             </Button>
-            <WhatsAppButton
-              phoneNumber={SUPPORT_PHONE_CLEAN}
-              message={whatsappMessage}
-              variant="outline"
-              className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 bg-transparent"
-            >
-              Enviar por WhatsApp
-            </WhatsAppButton>
             <Button onClick={() => router.push("/dashboard")} variant="outline">
               Ver Mis Compras
             </Button>

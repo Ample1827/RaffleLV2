@@ -1,20 +1,21 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { Ticket, ShoppingCart, Clock, CheckCircle, XCircle, Calendar } from "lucide-react"
+import { Ticket, ShoppingCart, Clock, CheckCircle, Calendar } from "lucide-react"
+import { getUserPurchases } from "@/lib/database"
+import { createClient } from "@/lib/supabase/client"
 
 interface Purchase {
   id: string
-  ticket_numbers: number[]
+  ticket_numbers: string[]
   total_amount: number
-  status: "pending" | "approved" | "denied"
+  status: "pending" | "bought"
   created_at: string
   updated_at: string
 }
@@ -23,7 +24,7 @@ interface DashboardStats {
   totalTickets: number
   totalSpent: number
   activePurchases: number
-  approvedTickets: number
+  boughtTickets: number
 }
 
 export function AuthProtectedDashboard() {
@@ -33,7 +34,7 @@ export function AuthProtectedDashboard() {
     totalTickets: 0,
     totalSpent: 0,
     activePurchases: 0,
-    approvedTickets: 0,
+    boughtTickets: 0,
   })
   const [loading, setLoading] = useState(true)
   const router = useRouter()
@@ -45,72 +46,63 @@ export function AuthProtectedDashboard() {
         data: { user },
       } = await supabase.auth.getUser()
 
+      console.log("[v0] Checking user authentication:", user)
+
       if (!user) {
+        console.log("[v0] No user found, redirecting to login")
         router.push("/login")
         return
       }
 
       setUser(user)
-      await fetchUserPurchases(user.id)
+      await fetchUserPurchases()
       setLoading(false)
     }
 
     checkUser()
   }, [router])
 
-  const fetchUserPurchases = async (userId: string) => {
-    const supabase = createClient()
+  const fetchUserPurchases = async () => {
+    try {
+      console.log("[v0] Fetching user purchases...")
+      const purchasesData = await getUserPurchases()
+      console.log("[v0] User purchases data:", purchasesData)
 
-    const { data: purchasesData, error } = await supabase
-      .from("purchases")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
+      setPurchases(purchasesData || [])
 
-    if (error) {
-      console.error("Error fetching purchases:", error)
-      return
+      const totalTickets = purchasesData?.reduce((sum, purchase) => sum + purchase.ticket_numbers.length, 0) || 0
+      const totalSpent = purchasesData?.reduce((sum, purchase) => sum + purchase.total_amount, 0) || 0
+      const activePurchases = purchasesData?.filter((p) => p.status === "pending").length || 0
+      const boughtTickets =
+        purchasesData
+          ?.filter((p) => p.status === "bought")
+          .reduce((sum, purchase) => sum + purchase.ticket_numbers.length, 0) || 0
+
+      setStats({
+        totalTickets,
+        totalSpent,
+        activePurchases,
+        boughtTickets,
+      })
+    } catch (error) {
+      console.error("[v0] Error fetching user purchases:", error)
     }
-
-    setPurchases(purchasesData || [])
-
-    const totalTickets = purchasesData?.reduce((sum, purchase) => sum + purchase.ticket_numbers.length, 0) || 0
-    const totalSpent = purchasesData?.reduce((sum, purchase) => sum + purchase.total_amount, 0) || 0
-    const activePurchases = purchasesData?.filter((p) => p.status === "pending").length || 0
-    const approvedTickets =
-      purchasesData
-        ?.filter((p) => p.status === "approved")
-        .reduce((sum, purchase) => sum + purchase.ticket_numbers.length, 0) || 0
-
-    setStats({
-      totalTickets,
-      totalSpent,
-      activePurchases,
-      approvedTickets,
-    })
   }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
         return (
-          <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200">
+          <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-gray-200">
             <Clock className="h-3 w-3 mr-1" />
             Pendiente
           </Badge>
         )
-      case "approved":
+      case "bought":
         return (
-          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200">
+          <Badge variant="secondary" className="bg-black text-white border-black">
             <CheckCircle className="h-3 w-3 mr-1" />
-            Aprobado
-          </Badge>
-        )
-      case "denied":
-        return (
-          <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-200">
-            <XCircle className="h-3 w-3 mr-1" />
-            Rechazado
+            Comprado
           </Badge>
         )
       default:
@@ -199,23 +191,23 @@ export function AuthProtectedDashboard() {
 
           <div className="bg-white rounded-lg p-6 shadow-lg">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Clock className="h-6 w-6 text-purple-600" />
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <Clock className="h-6 w-6 text-gray-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Pendientes</h3>
             </div>
-            <p className="text-3xl font-bold text-purple-600 mb-2">{stats.activePurchases}</p>
+            <p className="text-3xl font-bold text-gray-600 mb-2">{stats.activePurchases}</p>
             <p className="text-sm text-gray-600">Compras pendientes</p>
           </div>
 
           <div className="bg-white rounded-lg p-6 shadow-lg">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-emerald-600" />
+              <div className="p-2 bg-black rounded-lg">
+                <CheckCircle className="h-6 w-6 text-white" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Aprobados</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Comprados</h3>
             </div>
-            <p className="text-3xl font-bold text-emerald-600 mb-2">{stats.approvedTickets}</p>
+            <p className="text-3xl font-bold text-black mb-2">{stats.boughtTickets}</p>
             <p className="text-sm text-gray-600">Boletos confirmados</p>
           </div>
         </div>
@@ -241,7 +233,10 @@ export function AuthProtectedDashboard() {
             ) : (
               <div className="space-y-4">
                 {purchases.map((purchase) => (
-                  <Card key={purchase.id} className="border border-slate-200">
+                  <Card
+                    key={purchase.id}
+                    className={`border ${purchase.status === "pending" ? "border-gray-200 bg-gray-50" : "border-slate-200 bg-white"}`}
+                  >
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">Compra #{purchase.id.slice(-8).toUpperCase()}</CardTitle>
@@ -273,8 +268,8 @@ export function AuthProtectedDashboard() {
                       <div className="mt-4">
                         <p className="text-sm text-gray-600 mb-2">Números de Boletos:</p>
                         <div className="flex flex-wrap gap-1">
-                          {purchase.ticket_numbers.slice(0, 20).map((ticketNum) => (
-                            <Badge key={ticketNum} variant="secondary" className="bg-slate-100 text-slate-700 text-xs">
+                          {purchase.ticket_numbers.slice(0, 20).map((ticketNum, index) => (
+                            <Badge key={index} variant="secondary" className="bg-slate-100 text-slate-700 text-xs">
                               {ticketNum.toString().padStart(4, "0")}
                             </Badge>
                           ))}
@@ -287,28 +282,18 @@ export function AuthProtectedDashboard() {
                       </div>
 
                       {purchase.status === "pending" && (
-                        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                          <p className="text-sm text-amber-700">
-                            <strong>Acción requerida:</strong> Realiza la transferencia bancaria y envía el comprobante
-                            por WhatsApp para confirmar tu compra.
+                        <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                          <p className="text-sm text-gray-700">
+                            <strong>Estado:</strong> Tu compra está pendiente de aprobación por el administrador.
                           </p>
                         </div>
                       )}
 
-                      {purchase.status === "denied" && (
-                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                          <p className="text-sm text-red-700">
-                            <strong>Compra rechazada:</strong> Contacta a soporte para más información sobre el rechazo
-                            de tu pago.
-                          </p>
-                        </div>
-                      )}
-
-                      {purchase.status === "approved" && (
-                        <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                          <p className="text-sm text-emerald-700">
-                            <strong>¡Felicidades!</strong> Tu compra ha sido confirmada. Tus boletos están activos para
-                            el sorteo.
+                      {purchase.status === "bought" && (
+                        <div className="mt-4 p-3 bg-black text-white rounded-lg">
+                          <p className="text-sm">
+                            <strong>¡Felicidades!</strong> Tu compra ha sido aprobada. Tus boletos están activos para el
+                            sorteo.
                           </p>
                         </div>
                       )}

@@ -11,6 +11,9 @@ import { useRouter } from "next/navigation"
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
+const ADMIN_EMAIL = "Adalromero99@gmail.com"
+const ADMIN_PASSWORD = "182728"
+
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [email, setEmail] = React.useState("")
@@ -24,15 +27,34 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     setError("")
 
     try {
+      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        // Store admin session in localStorage
+        localStorage.setItem("isAdmin", "true")
+        localStorage.setItem("adminEmail", email)
+        router.push("/admin")
+        return
+      }
+
       const supabase = createClient()
+
+      console.log("[v0] Attempting login with email:", email)
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
+        email: email.trim(),
         password: password,
       })
 
+      console.log("[v0] Supabase response:", { data, error })
+
       if (error) {
-        setError(error.message)
-      } else {
+        console.log("[v0] Authentication error:", error.message)
+        setError(`Error de autenticación: ${error.message}`)
+      } else if (data?.user) {
+        console.log("[v0] Login successful for user:", data.user.id)
+        // Clear admin flag for regular users
+        localStorage.removeItem("isAdmin")
+        localStorage.removeItem("adminEmail")
+
         const urlParams = new URLSearchParams(window.location.search)
         const hasTickets = urlParams.get("tickets") || sessionStorage.getItem("selectedTickets")
 
@@ -41,9 +63,12 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         } else {
           router.push("/dashboard")
         }
+      } else {
+        setError("No se pudo autenticar. Verifica tus credenciales.")
       }
     } catch (err) {
-      setError("Error al iniciar sesión. Inténtalo de nuevo.")
+      console.log("[v0] Unexpected error:", err)
+      setError("Error inesperado al iniciar sesión. Inténtalo de nuevo.")
     } finally {
       setIsLoading(false)
     }
