@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Ticket } from "lucide-react"
+import { Menu, X, Ticket, Shield } from "lucide-react"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "@/components/auth/auth-provider"
@@ -13,7 +13,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
-  const { user, signOut, loading } = useAuth()
+  const { user, isAdmin, signOut, loading } = useAuth()
 
   const handleContactClick = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -68,13 +68,22 @@ export function Navbar() {
             </button>
             {!loading && (
               <>
-                {user ? (
+                {user || isAdmin ? (
                   <div className="flex items-center space-x-4">
-                    <Link href="/dashboard">
-                      <Button className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white transition-all duration-300 shadow-lg">
-                        Ver Mis Compras
-                      </Button>
-                    </Link>
+                    {isAdmin ? (
+                      <Link href="/admin">
+                        <Button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white transition-all duration-300 shadow-lg">
+                          <Shield className="h-4 w-4 mr-2" />
+                          Panel Admin
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link href="/dashboard">
+                        <Button className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white transition-all duration-300 shadow-lg">
+                          Ver Mis Compras
+                        </Button>
+                      </Link>
+                    )}
                     <Button
                       onClick={handleSignOut}
                       variant="outline"
@@ -138,13 +147,22 @@ export function Navbar() {
               </button>
               {!loading && (
                 <div className="flex flex-col space-y-2 pt-4">
-                  {user ? (
+                  {user || isAdmin ? (
                     <>
-                      <Link href="/dashboard" onClick={() => setIsOpen(false)}>
-                        <Button className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white transition-all duration-300 w-full shadow-lg">
-                          Ver Mis Compras
-                        </Button>
-                      </Link>
+                      {isAdmin ? (
+                        <Link href="/admin" onClick={() => setIsOpen(false)}>
+                          <Button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white transition-all duration-300 w-full shadow-lg">
+                            <Shield className="h-4 w-4 mr-2" />
+                            Panel Admin
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                          <Button className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white transition-all duration-300 w-full shadow-lg">
+                            Ver Mis Compras
+                          </Button>
+                        </Link>
+                      )}
                       <Button
                         onClick={handleSignOut}
                         variant="outline"
