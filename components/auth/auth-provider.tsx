@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
+  isAdmin: boolean
   signOut: () => Promise<void>
 }
 
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
+  isAdmin: false,
   signOut: async () => {},
 })
 
@@ -31,7 +33,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
   const supabase = createClient()
+
+  const checkAdminStatus = (user: User | null) => {
+    if (!user) {
+      setIsAdmin(false)
+      return false
+    }
+
+    // Check if user is the hardcoded admin
+    const adminStatus = user.email === "Adalromero99@gmail.com" || localStorage.getItem("isAdmin") === "true"
+    setIsAdmin(adminStatus)
+    return adminStatus
+  }
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -42,10 +57,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setSession(session)
         setUser(session?.user ?? null)
+        checkAdminStatus(session?.user ?? null)
 
         console.log("[v0] Auth initialized:", {
           hasSession: !!session,
           userEmail: session?.user?.email,
+          isAdmin: checkAdminStatus(session?.user ?? null),
         })
       } catch (error) {
         console.error("[v0] Auth initialization error:", error)
@@ -67,7 +84,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setSession(session)
       setUser(session?.user ?? null)
+      checkAdminStatus(session?.user ?? null)
       setLoading(false)
+
+      if (event === "SIGNED_OUT") {
+        localStorage.removeItem("isAdmin")
+        localStorage.removeItem("adminEmail")
+        setIsAdmin(false)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -75,8 +99,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     console.log("[v0] Signing out user")
+    localStorage.removeItem("isAdmin")
+    localStorage.removeItem("adminEmail")
+    setIsAdmin(false)
     await supabase.auth.signOut()
   }
 
-  return <AuthContext.Provider value={{ user, session, loading, signOut }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, session, loading, isAdmin, signOut }}>{children}</AuthContext.Provider>
 }

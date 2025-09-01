@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -18,20 +19,32 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
-  const [error, setError] = React.useState("")
   const router = useRouter()
+  const { toast } = useToast()
 
   const validateInputs = () => {
     if (!email.trim()) {
-      setError("El correo electrónico es requerido")
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "El correo electrónico es requerido",
+      })
       return false
     }
     if (!email.includes("@")) {
-      setError("Ingresa un correo electrónico válido")
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Ingresa un correo electrónico válido",
+      })
       return false
     }
     if (!password) {
-      setError("La contraseña es requerida")
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "La contraseña es requerida",
+      })
       return false
     }
     return true
@@ -39,7 +52,6 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
 
   async function onSubmit(event: React.SyntheticEvent) {
     event.preventDefault()
-    setError("")
 
     if (!validateInputs()) {
       return
@@ -48,22 +60,42 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     setIsLoading(true)
 
     try {
-      const isAdmin = email === ADMIN_EMAIL
+      const supabase = createClient()
 
-      if (isAdmin && password === ADMIN_PASSWORD) {
-        console.log("[v0] Admin login successful")
-        localStorage.setItem("isAdmin", "true")
-        localStorage.setItem("adminEmail", email)
-        router.push("/admin")
-        return
-      } else if (isAdmin && password !== ADMIN_PASSWORD) {
-        setError("Contraseña de administrador incorrecta")
-        setIsLoading(false)
-        return
+      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        console.log("[v0] Admin login detected")
+
+        // Try to sign in admin with Supabase
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: password,
+        })
+
+        if (error) {
+          console.log("[v0] Admin Supabase auth failed, creating admin session manually")
+          // If admin doesn't exist in Supabase, create local admin session
+          localStorage.setItem("isAdmin", "true")
+          localStorage.setItem("adminEmail", email)
+          toast({
+            title: "Éxito",
+            description: "Bienvenido, Administrador",
+          })
+          router.push("/admin")
+          return
+        } else if (data?.user) {
+          console.log("[v0] Admin authenticated via Supabase")
+          localStorage.setItem("isAdmin", "true")
+          localStorage.setItem("adminEmail", email)
+          toast({
+            title: "Éxito",
+            description: "Bienvenido, Administrador",
+          })
+          router.push("/admin")
+          return
+        }
       }
 
-      const supabase = createClient()
-      console.log("[v0] Attempting Supabase login with email:", email)
+      console.log("[v0] Attempting regular user login with email:", email)
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -75,19 +107,33 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       if (error) {
         console.log("[v0] Authentication error:", error.message)
         let errorMessage = "Error de autenticación"
+
         if (error.message.includes("Invalid login credentials")) {
           errorMessage = "Credenciales incorrectas. Verifica tu correo y contraseña."
         } else if (error.message.includes("Email not confirmed")) {
           errorMessage = "Confirma tu correo electrónico antes de iniciar sesión."
+        } else if (error.message.includes("Too many requests")) {
+          errorMessage = "Demasiados intentos. Espera un momento antes de intentar de nuevo."
         } else {
           errorMessage = `Error: ${error.message}`
         }
-        setError(errorMessage)
+
+        toast({
+          variant: "destructive",
+          title: "Error de autenticación",
+          description: errorMessage,
+        })
       } else if (data?.user) {
         console.log("[v0] Login successful for user:", data.user.id)
-        // Clear admin flags for regular users
+
+        // Clear any admin flags for regular users
         localStorage.removeItem("isAdmin")
         localStorage.removeItem("adminEmail")
+
+        toast({
+          title: "¡Bienvenido!",
+          description: "Has iniciado sesión correctamente",
+        })
 
         const urlParams = new URLSearchParams(window.location.search)
         const hasTickets = urlParams.get("tickets") || sessionStorage.getItem("selectedTickets")
@@ -98,11 +144,19 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           router.push("/dashboard")
         }
       } else {
-        setError("No se pudo autenticar. Verifica tus credenciales.")
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No se pudo autenticar. Verifica tus credenciales.",
+        })
       }
     } catch (err) {
       console.error("[v0] Unexpected error:", err)
-      setError("Error inesperado al iniciar sesión. Inténtalo de nuevo.")
+      toast({
+        variant: "destructive",
+        title: "Error inesperado",
+        description: "Error inesperado al iniciar sesión. Inténtalo de nuevo.",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -112,7 +166,6 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     <div className={cn("grid gap-6", className)} {...props}>
       <form onSubmit={onSubmit}>
         <div className="grid gap-2">
-          {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 p-3 rounded-md">{error}</div>}
           <div className="grid gap-1">
             <Label className="sr-only" htmlFor="email">
               Correo electrónico
