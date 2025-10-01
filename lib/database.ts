@@ -124,3 +124,158 @@ export async function updatePurchaseStatus(purchaseId: string, status: "pending"
     throw error
   }
 }
+
+export async function getAllTickets() {
+  const supabase = createClient()
+
+  try {
+    console.log("[v0] Fetching all tickets")
+
+    const { data, error } = await supabase.from("tickets").select("*").order("ticket_number", { ascending: true })
+
+    if (error) {
+      console.error("[v0] Error fetching tickets:", error)
+      throw error
+    }
+
+    console.log("[v0] Fetched tickets:", data?.length || 0, "records")
+    return data
+  } catch (error) {
+    console.error("[v0] Unexpected error in getAllTickets:", error)
+    throw error
+  }
+}
+
+export async function getTicketsByRange(startNumber: number, endNumber: number) {
+  const supabase = createClient()
+
+  try {
+    console.log("[v0] Fetching tickets in range:", startNumber, "-", endNumber)
+
+    const { data, error } = await supabase
+      .from("tickets")
+      .select("*")
+      .gte("ticket_number", startNumber)
+      .lte("ticket_number", endNumber)
+      .order("ticket_number", { ascending: true })
+
+    if (error) {
+      console.error("[v0] Error fetching tickets by range:", error)
+      throw error
+    }
+
+    console.log("[v0] Fetched tickets in range:", data?.length || 0, "records")
+    return data
+  } catch (error) {
+    console.error("[v0] Unexpected error in getTicketsByRange:", error)
+    throw error
+  }
+}
+
+export async function createPurchaseWithoutAuth(purchaseData: {
+  ticket_numbers: number[]
+  total_amount: number
+}) {
+  const supabase = createClient()
+
+  try {
+    console.log("[v0] Creating purchase without auth:", purchaseData)
+
+    // Generate unique ticket ID
+    const ticketId = `TKT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999999) + 1).padStart(6, "0")}`
+
+    const { data, error } = await supabase
+      .from("purchases")
+      .insert({
+        user_id: null, // No user authentication required
+        ticket_numbers: purchaseData.ticket_numbers,
+        total_amount: purchaseData.total_amount,
+        status: "pending",
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error("[v0] Error creating purchase:", error)
+      throw error
+    }
+
+    console.log("[v0] Purchase created successfully:", data)
+    return { ...data, ticketId }
+  } catch (error) {
+    console.error("[v0] Unexpected error in createPurchaseWithoutAuth:", error)
+    throw error
+  }
+}
+
+export async function updatePurchaseStatusAndTickets(purchaseId: string, status: "pending" | "bought") {
+  const supabase = createClient()
+
+  try {
+    console.log("[v0] Updating purchase status and tickets:", { purchaseId, status })
+
+    // First, get the purchase to find ticket numbers
+    const { data: purchase, error: fetchError } = await supabase
+      .from("purchases")
+      .select("*")
+      .eq("id", purchaseId)
+      .single()
+
+    if (fetchError) {
+      console.error("[v0] Error fetching purchase:", fetchError)
+      throw fetchError
+    }
+
+    // Update purchase status
+    const { data: updatedPurchase, error: updateError } = await supabase
+      .from("purchases")
+      .update({
+        status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", purchaseId)
+      .select()
+      .single()
+
+    if (updateError) {
+      console.error("[v0] Error updating purchase status:", updateError)
+      throw updateError
+    }
+
+    // If status is "bought", mark tickets as unavailable
+    if (status === "bought" && purchase.ticket_numbers && purchase.ticket_numbers.length > 0) {
+      console.log("[v0] Marking tickets as unavailable:", purchase.ticket_numbers)
+
+      const { error: ticketError } = await supabase
+        .from("tickets")
+        .update({ is_available: false })
+        .in("ticket_number", purchase.ticket_numbers)
+
+      if (ticketError) {
+        console.error("[v0] Error updating ticket availability:", ticketError)
+        throw ticketError
+      }
+    }
+
+    // If status is "pending", mark tickets as available again
+    if (status === "pending" && purchase.ticket_numbers && purchase.ticket_numbers.length > 0) {
+      console.log("[v0] Marking tickets as available:", purchase.ticket_numbers)
+
+      const { error: ticketError } = await supabase
+        .from("tickets")
+        .update({ is_available: true })
+        .in("ticket_number", purchase.ticket_numbers)
+
+      if (ticketError) {
+        console.error("[v0] Error updating ticket availability:", ticketError)
+        throw ticketError
+      }
+    }
+
+    console.log("[v0] Purchase status and tickets updated successfully")
+    return updatedPurchase
+  } catch (error) {
+    console.error("[v0] Unexpected error in updatePurchaseStatusAndTickets:", error)
+    throw error
+  }
+}

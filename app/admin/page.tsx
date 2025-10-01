@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { getAllPurchases, updatePurchaseStatus } from "@/lib/database"
+import { getAllPurchases, updatePurchaseStatusAndTickets } from "@/lib/database"
 import { ShoppingCart, Clock, CheckCircle, Calendar, Ticket, DollarSign, LogOut } from "lucide-react"
 
 interface AdminStats {
@@ -103,10 +103,10 @@ export default function AdminPage() {
     setUpdating(true)
     try {
       console.log("[v0] Marking purchase as sold:", purchaseId)
-      await updatePurchaseStatus(purchaseId, "bought")
+      await updatePurchaseStatusAndTickets(purchaseId, "bought")
       await fetchAdminData() // Refresh data
       setSelectedPurchase(null)
-      alert("Boletos marcados como vendidos exitosamente")
+      alert("Boletos marcados como vendidos y actualizados en todo el sitio")
     } catch (error) {
       console.error("[v0] Error updating purchase status:", error)
       alert("Error al actualizar el estado de la compra")
@@ -119,10 +119,10 @@ export default function AdminPage() {
     setUpdating(true)
     try {
       console.log("[v0] Marking purchase as pending:", purchaseId)
-      await updatePurchaseStatus(purchaseId, "pending")
+      await updatePurchaseStatusAndTickets(purchaseId, "pending")
       await fetchAdminData() // Refresh data
       setSelectedPurchase(null)
-      alert("Boletos marcados como pendientes exitosamente")
+      alert("Boletos marcados como pendientes y disponibles nuevamente")
     } catch (error) {
       console.error("[v0] Error updating purchase status:", error)
       alert("Error al actualizar el estado de la compra")

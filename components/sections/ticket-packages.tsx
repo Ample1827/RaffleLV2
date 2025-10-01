@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Star, Zap, Sparkles, Shuffle, ShoppingCart } from "lucide-react"
+import { getTicketsByRange, createPurchaseWithoutAuth } from "@/lib/database"
+import { openWhatsApp } from "@/lib/whatsapp"
 
 const ticketPackages = [
   {
@@ -85,6 +87,8 @@ export function TicketPackages() {
   const [showLuckyDialog, setShowLuckyDialog] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [openSectionDialog, setOpenSectionDialog] = useState<number | null>(null)
+  const [ticketData, setTicketData] = useState<Record<number, any[]>>({})
+  const [loadingTickets, setLoadingTickets] = useState<Record<number, boolean>>({})
   const [purchaseForm, setPurchaseForm] = useState({
     firstName: "",
     lastName: "",
@@ -105,6 +109,26 @@ export function TicketPackages() {
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (openSectionDialog !== null && !ticketData[openSectionDialog]) {
+      fetchTicketsForSection(openSectionDialog)
+    }
+  }, [openSectionDialog])
+
+  const fetchTicketsForSection = async (sectionIndex: number) => {
+    setLoadingTickets((prev) => ({ ...prev, [sectionIndex]: true }))
+    try {
+      const startNum = sectionIndex * 1000
+      const endNum = startNum + 999
+      const tickets = await getTicketsByRange(startNum, endNum)
+      setTicketData((prev) => ({ ...prev, [sectionIndex]: tickets }))
+    } catch (error) {
+      console.error("[v0] Error fetching tickets:", error)
+    } finally {
+      setLoadingTickets((prev) => ({ ...prev, [sectionIndex]: false }))
+    }
+  }
 
   const handlePackageSelect = (packageId: number) => {
     setSelectedPackage(packageId)
@@ -139,16 +163,68 @@ export function TicketPackages() {
     })
   }
 
-  const handlePayNow = () => {
-    const purchaseData = {
-      tickets: selectedTickets,
-      totalAmount: selectedPackage ? getSelectedPackageInfo()?.price : selectedTickets.length * 20,
-      packageInfo: selectedPackage ? getSelectedPackageInfo() : undefined,
-      userInfo: purchaseForm,
+  const handlePayNow = async () => {
+    // Validate form
+    if (!purchaseForm.firstName || !purchaseForm.lastName || !purchaseForm.phoneNumber || !purchaseForm.state) {
+      alert("Por favor completa todos los campos requeridos")
+      return
     }
 
-    sessionStorage.setItem("purchaseData", JSON.stringify(purchaseData))
-    window.location.href = "/login?tickets=true"
+    try {
+      // Convert selected tickets to numbers
+      const ticketNumbers = selectedTickets.map((t) => Number.parseInt(t))
+      const totalAmount = selectedPackage ? getSelectedPackageInfo()?.price || 0 : selectedTickets.length * 20
+
+      // Create purchase in database
+      const purchase = await createPurchaseWithoutAuth({
+        ticket_numbers: ticketNumbers,
+        total_amount: totalAmount,
+      })
+
+      // Generate WhatsApp message
+      const ticketId = purchase.ticketId
+      const message = `Hola, soy ${purchaseForm.firstName} ${purchaseForm.lastName}
+
+📋 *ID de Reserva:* ${ticketId}
+
+🎫 *Boletos Reservados:* ${selectedTickets.length}
+${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y ${selectedTickets.length - 20} más` : ""}
+
+💰 *Total a Pagar:* $${totalAmount}
+
+📍 *Estado:* ${purchaseForm.state}
+📱 *Teléfono:* ${purchaseForm.phoneNumber}
+
+*Pasos para completar tu compra:*
+1. Realiza la transferencia bancaria por $${totalAmount}
+2. Envía tu comprobante de pago a este número
+3. Incluye tu ID de Reserva: ${ticketId}
+4. Espera la confirmación (máximo 24 horas)
+
+¡Gracias por tu compra! 🎉`
+
+      // Open WhatsApp
+      openWhatsApp("+5212216250235", message)
+
+      // Close dialog and reset
+      setShowPurchaseDialog(false)
+      alert(`¡Reserva creada! ID: ${ticketId}\n\nTe hemos redirigido a WhatsApp para completar tu pago.`)
+
+      // Reset form and selections
+      setPurchaseForm({
+        firstName: "",
+        lastName: "",
+        phoneNumber: "",
+        state: "",
+        promoCode: "",
+      })
+      setSelectedTickets([])
+      setSelectedPackage(null)
+      setAssignedPackageTickets([])
+    } catch (error) {
+      console.error("[v0] Error creating purchase:", error)
+      alert("Error al crear la reserva. Por favor intenta de nuevo.")
+    }
   }
 
   const generateLuckyNumbers = () => {
@@ -173,13 +249,25 @@ export function TicketPackages() {
     }, 3000)
   }
 
-  const toggleTicketSelection = (ticketNumber: string) => {
+  const toggleTicketSelection = (ticketNumber: string, isAvailable: boolean) => {
+    if (!isAvailable) {
+      alert("Este boleto ya no está disponible")
+      return
+    }
     setSelectedTickets((prev) =>
       prev.includes(ticketNumber) ? prev.filter((t) => t !== ticketNumber) : [...prev, ticketNumber],
     )
   }
 
   const generateTicketNumbers = (sectionIndex: number) => {
+    if (ticketData[sectionIndex]) {
+      return ticketData[sectionIndex].map((ticket) => ({
+        number: ticket.ticket_number.toString().padStart(4, "0"),
+        available: ticket.is_available,
+      }))
+    }
+
+    // Fallback to generated data if not loaded yet
     const startNum = sectionIndex * 1000
     const tickets = []
 
@@ -451,7 +539,9 @@ export function TicketPackages() {
           {Array.from({ length: 10 }, (_, i) => {
             const startNum = i * 1000
             const endNum = startNum + 999
-            const availableTickets = 1000
+            const sectionTickets = ticketData[i] || []
+            const availableTickets =
+              sectionTickets.length > 0 ? sectionTickets.filter((t) => t.is_available).length : 1000
 
             return (
               <Dialog
@@ -480,7 +570,7 @@ export function TicketPackages() {
                         <div className="w-full bg-slate-200 rounded-full h-2 mt-2">
                           <div
                             className="bg-amber-500 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `100%` }}
+                            style={{ width: `${(availableTickets / 1000) * 100}%` }}
                           ></div>
                         </div>
                       </div>
@@ -495,54 +585,69 @@ export function TicketPackages() {
                     </DialogTitle>
                   </DialogHeader>
 
-                  <div className="overflow-y-auto max-h-[60vh]">
-                    <div className="grid grid-cols-10 gap-2 p-4">
-                      {generateTicketNumbers(i).map((ticket) => (
-                        <Button
-                          key={ticket.number}
-                          variant="outline"
-                          size="sm"
-                          className={`h-8 text-xs ${
-                            selectedTickets.includes(ticket.number)
-                              ? "bg-amber-500 text-white border-amber-500"
-                              : "border-slate-300 text-slate-700 bg-white hover:bg-amber-500 hover:text-white hover:border-amber-500"
-                          }`}
-                          onClick={() => toggleTicketSelection(ticket.number)}
-                        >
-                          {ticket.number}
-                        </Button>
-                      ))}
+                  {loadingTickets[i] ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="overflow-y-auto max-h-[60vh]">
+                        <div className="grid grid-cols-10 gap-2 p-4">
+                          {generateTicketNumbers(i).map((ticket) => (
+                            <Button
+                              key={ticket.number}
+                              variant="outline"
+                              size="sm"
+                              className={`h-8 text-xs ${
+                                !ticket.available
+                                  ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed opacity-50"
+                                  : selectedTickets.includes(ticket.number)
+                                    ? "bg-amber-500 text-white border-amber-500"
+                                    : "border-slate-300 text-slate-700 bg-white hover:bg-amber-500 hover:text-white hover:border-amber-500"
+                              }`}
+                              onClick={() => toggleTicketSelection(ticket.number, ticket.available)}
+                              disabled={!ticket.available}
+                            >
+                              {ticket.number}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
 
-                  <div className="flex justify-between items-center pt-4 border-t border-slate-200">
-                    <div className="flex gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 border border-slate-300 bg-white rounded"></div>
-                        <span className="text-slate-600">Disponible</span>
+                      <div className="flex justify-between items-center pt-4 border-t border-slate-200">
+                        <div className="flex gap-4 text-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 border border-slate-300 bg-white rounded"></div>
+                            <span className="text-slate-600">Disponible</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-amber-500 rounded"></div>
+                            <span className="text-slate-600">Seleccionado</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-gray-400 rounded"></div>
+                            <span className="text-slate-600">Vendido</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <p className="text-amber-600 font-semibold">{availableTickets} boletos disponibles</p>
+                          {selectedTickets.filter((ticket) => {
+                            const ticketNum = Number.parseInt(ticket)
+                            return ticketNum >= startNum && ticketNum <= endNum
+                          }).length > 0 && (
+                            <Button
+                              onClick={() => handlePurchaseFromTable(generateTicketNumbers(i).map((t) => t.number))}
+                              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                              size="sm"
+                            >
+                              <ShoppingCart className="h-4 w-4 mr-1" />
+                              Comprar Seleccionados
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-amber-500 rounded"></div>
-                        <span className="text-slate-600">Seleccionado</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <p className="text-amber-600 font-semibold">{availableTickets} boletos disponibles</p>
-                      {selectedTickets.filter((ticket) => {
-                        const ticketNum = Number.parseInt(ticket)
-                        return ticketNum >= startNum && ticketNum <= endNum
-                      }).length > 0 && (
-                        <Button
-                          onClick={() => handlePurchaseFromTable(generateTicketNumbers(i).map((t) => t.number))}
-                          className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                          size="sm"
-                        >
-                          <ShoppingCart className="h-4 w-4 mr-1" />
-                          Comprar Seleccionados
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </DialogContent>
               </Dialog>
             )

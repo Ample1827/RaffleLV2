@@ -33,20 +33,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Only protect dashboard routes for authenticated users
-  if (request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname.startsWith("/resumen-boletos")) {
-    if (!user) {
-      const url = request.nextUrl.clone()
-      url.pathname = "/login"
-      return NextResponse.redirect(url)
-    }
-  }
-
-  if (user && (request.nextUrl.pathname.startsWith("/login") || request.nextUrl.pathname.startsWith("/register"))) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/dashboard"
-    return NextResponse.redirect(url)
-  }
+  // Admin panel protection is handled separately in the admin dashboard component
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   return supabaseResponse
