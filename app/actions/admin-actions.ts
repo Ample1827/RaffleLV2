@@ -41,7 +41,6 @@ export async function updatePurchaseStatusAdmin(purchaseId: string, status: "pen
   try {
     console.log("[v0] [Admin] Updating purchase status:", { purchaseId, status })
 
-    // First, get the purchase to find ticket numbers
     const { data: purchase, error: fetchError } = await supabase
       .from("purchases")
       .select("*")
@@ -50,10 +49,11 @@ export async function updatePurchaseStatusAdmin(purchaseId: string, status: "pen
 
     if (fetchError) {
       console.error("[v0] [Admin] Error fetching purchase:", fetchError)
-      throw fetchError
+      throw new Error(`Error obteniendo la compra: ${fetchError.message}`)
     }
 
-    // Update purchase status
+    console.log("[v0] [Admin] Found purchase:", purchase)
+
     const { data: updatedPurchase, error: updateError } = await supabase
       .from("purchases")
       .update({
@@ -66,13 +66,16 @@ export async function updatePurchaseStatusAdmin(purchaseId: string, status: "pen
 
     if (updateError) {
       console.error("[v0] [Admin] Error updating purchase status:", updateError)
-      throw updateError
+      throw new Error(`Error actualizando el estado: ${updateError.message}`)
     }
 
-    // Tickets are only released when purchase is deleted
-    if (purchase.ticket_numbers && purchase.ticket_numbers.length > 0) {
-      console.log("[v0] [Admin] Keeping tickets reserved for status:", status)
+    console.log("[v0] [Admin] Purchase status updated successfully:", updatedPurchase)
 
+    if (purchase.ticket_numbers && purchase.ticket_numbers.length > 0) {
+      console.log("[v0] [Admin] Updating ticket availability for status:", status)
+
+      // When marking as "bought", keep tickets unavailable
+      // When marking as "pending", also keep tickets unavailable (reserved)
       const { error: ticketError } = await supabase
         .from("tickets")
         .update({ is_available: false })
@@ -80,15 +83,20 @@ export async function updatePurchaseStatusAdmin(purchaseId: string, status: "pen
 
       if (ticketError) {
         console.error("[v0] [Admin] Error updating ticket availability:", ticketError)
-        throw ticketError
+        throw new Error(`Error actualizando disponibilidad de boletos: ${ticketError.message}`)
       }
+
+      console.log("[v0] [Admin] Tickets updated successfully")
     }
 
     console.log("[v0] [Admin] Purchase status updated successfully")
     return updatedPurchase
   } catch (error) {
     console.error("[v0] [Admin] Unexpected error in updatePurchaseStatusAdmin:", error)
-    throw error
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error("Error inesperado al actualizar el estado de la compra")
   }
 }
 
@@ -98,7 +106,6 @@ export async function deletePurchaseAdmin(purchaseId: string) {
   try {
     console.log("[v0] [Admin] Deleting purchase:", purchaseId)
 
-    // First, get the purchase to find ticket numbers
     const { data: purchase, error: fetchError } = await supabase
       .from("purchases")
       .select("*")
@@ -137,6 +144,9 @@ export async function deletePurchaseAdmin(purchaseId: string) {
     return true
   } catch (error) {
     console.error("[v0] [Admin] Unexpected error in deletePurchaseAdmin:", error)
-    throw error
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error("Error inesperado al eliminar la compra")
   }
 }

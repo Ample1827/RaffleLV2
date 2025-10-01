@@ -107,14 +107,16 @@ export default function AdminPage() {
   const handleMarkAsSold = async (purchaseId: string) => {
     setUpdating(true)
     try {
-      console.log("[v0] Marking purchase as sold:", purchaseId)
-      await updatePurchaseStatusAdmin(purchaseId, "bought")
+      console.log("[v0] [Admin Page] Marking purchase as sold:", purchaseId)
+      const result = await updatePurchaseStatusAdmin(purchaseId, "bought")
+      console.log("[v0] [Admin Page] Update result:", result)
       await fetchAdminData() // Refresh data
       setSelectedPurchase(null)
       alert("Boletos marcados como vendidos y actualizados en todo el sitio")
     } catch (error) {
-      console.error("[v0] Error updating purchase status:", error)
-      alert("Error al actualizar el estado de la compra")
+      console.error("[v0] [Admin Page] Error updating purchase status:", error)
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido"
+      alert(`Error al actualizar el estado de la compra: ${errorMessage}`)
     } finally {
       setUpdating(false)
     }
@@ -123,14 +125,16 @@ export default function AdminPage() {
   const handleMarkAsPending = async (purchaseId: string) => {
     setUpdating(true)
     try {
-      console.log("[v0] Marking purchase as pending:", purchaseId)
-      await updatePurchaseStatusAdmin(purchaseId, "pending")
+      console.log("[v0] [Admin Page] Marking purchase as pending:", purchaseId)
+      const result = await updatePurchaseStatusAdmin(purchaseId, "pending")
+      console.log("[v0] [Admin Page] Update result:", result)
       await fetchAdminData() // Refresh data
       setSelectedPurchase(null)
       alert("Boletos marcados como pendientes y disponibles nuevamente")
     } catch (error) {
-      console.error("[v0] Error updating purchase status:", error)
-      alert("Error al actualizar el estado de la compra")
+      console.error("[v0] [Admin Page] Error updating purchase status:", error)
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido"
+      alert(`Error al actualizar el estado de la compra: ${errorMessage}`)
     } finally {
       setUpdating(false)
     }
