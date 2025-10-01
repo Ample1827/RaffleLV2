@@ -179,11 +179,35 @@ export async function createPurchaseWithoutAuth(purchaseData: {
   const supabase = createClient()
 
   try {
-    console.log("[v0] Creating purchase without auth:", purchaseData)
+    console.log("[v0] Creating purchase without auth - START")
+    console.log("[v0] Purchase data:", JSON.stringify(purchaseData, null, 2))
+    console.log("[v0] Ticket numbers count:", purchaseData.ticket_numbers.length)
+    console.log("[v0] Total amount:", purchaseData.total_amount)
 
-    // Generate unique ticket ID
     const ticketId = `TKT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999999) + 1).padStart(6, "0")}`
+    console.log("[v0] Generated ticket ID:", ticketId)
 
+    console.log("[v0] Checking ticket availability...")
+    const { data: existingTickets, error: checkError } = await supabase
+      .from("tickets")
+      .select("ticket_number, is_available")
+      .in("ticket_number", purchaseData.ticket_numbers)
+
+    if (checkError) {
+      console.error("[v0] Error checking ticket availability:", checkError)
+      throw new Error(`Error verificando disponibilidad: ${checkError.message}`)
+    }
+
+    console.log("[v0] Found tickets:", existingTickets?.length)
+    const unavailableTickets = existingTickets?.filter((t) => !t.is_available) || []
+    if (unavailableTickets.length > 0) {
+      console.error("[v0] Some tickets are not available:", unavailableTickets)
+      throw new Error(
+        `Algunos boletos ya no están disponibles: ${unavailableTickets.map((t) => t.ticket_number).join(", ")}`,
+      )
+    }
+
+    console.log("[v0] Reserving tickets...")
     const { error: ticketError } = await supabase
       .from("tickets")
       .update({ is_available: false })
@@ -191,13 +215,17 @@ export async function createPurchaseWithoutAuth(purchaseData: {
 
     if (ticketError) {
       console.error("[v0] Error reserving tickets:", ticketError)
-      throw ticketError
+      console.error("[v0] Ticket error details:", JSON.stringify(ticketError, null, 2))
+      throw new Error(`Error reservando boletos: ${ticketError.message}`)
     }
 
+    console.log("[v0] Tickets reserved successfully")
+
+    console.log("[v0] Creating purchase record...")
     const { data, error } = await supabase
       .from("purchases")
       .insert({
-        user_id: null, // No user authentication required
+        user_id: null,
         ticket_numbers: purchaseData.ticket_numbers,
         total_amount: purchaseData.total_amount,
         status: "pending",
@@ -207,14 +235,26 @@ export async function createPurchaseWithoutAuth(purchaseData: {
 
     if (error) {
       console.error("[v0] Error creating purchase:", error)
+      console.error("[v0] Purchase error code:", error.code)
+      console.error("[v0] Purchase error message:", error.message)
+      console.error("[v0] Purchase error details:", JSON.stringify(error, null, 2))
+
+      console.log("[v0] Rolling back ticket reservation...")
       await supabase.from("tickets").update({ is_available: true }).in("ticket_number", purchaseData.ticket_numbers)
-      throw error
+
+      throw new Error(`Error creando la compra: ${error.message}`)
     }
 
-    console.log("[v0] Purchase created successfully with reserved tickets:", data)
+    console.log("[v0] Purchase created successfully:", data)
+    console.log("[v0] Purchase ID:", data.id)
     return { ...data, ticketId }
   } catch (error) {
     console.error("[v0] Unexpected error in createPurchaseWithoutAuth:", error)
+    if (error instanceof Error) {
+      console.error("[v0] Error name:", error.name)
+      console.error("[v0] Error message:", error.message)
+      console.error("[v0] Error stack:", error.stack)
+    }
     throw error
   }
 }
@@ -225,7 +265,6 @@ export async function updatePurchaseStatusAndTickets(purchaseId: string, status:
   try {
     console.log("[v0] Updating purchase status and tickets:", { purchaseId, status })
 
-    // First, get the purchase to find ticket numbers
     const { data: purchase, error: fetchError } = await supabase
       .from("purchases")
       .select("*")
@@ -237,7 +276,6 @@ export async function updatePurchaseStatusAndTickets(purchaseId: string, status:
       throw fetchError
     }
 
-    // Update purchase status
     const { data: updatedPurchase, error: updateError } = await supabase
       .from("purchases")
       .update({
@@ -253,7 +291,6 @@ export async function updatePurchaseStatusAndTickets(purchaseId: string, status:
       throw updateError
     }
 
-    // If status is "bought", mark tickets as unavailable
     if (status === "bought" && purchase.ticket_numbers && purchase.ticket_numbers.length > 0) {
       console.log("[v0] Marking tickets as unavailable:", purchase.ticket_numbers)
 
@@ -268,7 +305,6 @@ export async function updatePurchaseStatusAndTickets(purchaseId: string, status:
       }
     }
 
-    // If status is "pending", mark tickets as available again
     if (status === "pending" && purchase.ticket_numbers && purchase.ticket_numbers.length > 0) {
       console.log("[v0] Marking tickets as available:", purchase.ticket_numbers)
 
@@ -297,7 +333,6 @@ export async function deletePurchase(purchaseId: string) {
   try {
     console.log("[v0] Deleting purchase:", purchaseId)
 
-    // First, get the purchase to find ticket numbers
     const { data: purchase, error: fetchError } = await supabase
       .from("purchases")
       .select("*")
@@ -309,7 +344,6 @@ export async function deletePurchase(purchaseId: string) {
       throw fetchError
     }
 
-    // Mark tickets as available again
     if (purchase.ticket_numbers && purchase.ticket_numbers.length > 0) {
       console.log("[v0] Releasing tickets:", purchase.ticket_numbers)
 
@@ -324,7 +358,6 @@ export async function deletePurchase(purchaseId: string) {
       }
     }
 
-    // Delete the purchase
     const { error: deleteError } = await supabase.from("purchases").delete().eq("id", purchaseId)
 
     if (deleteError) {

@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Star, Zap, Sparkles, Shuffle, ShoppingCart } from "lucide-react"
-import { getTicketsByRange, createPurchaseWithoutAuth } from "@/lib/database"
+import { Star, Zap, Sparkles, Shuffle, ShoppingCart, RefreshCw } from "lucide-react"
+import { getTicketsByRange } from "@/lib/database"
 import { openWhatsApp } from "@/lib/whatsapp"
+import { createPurchaseAction } from "@/app/actions/purchase-actions"
+import { useAllTickets, useTicketsByRange } from "@/lib/hooks/use-tickets"
 
 const ticketPackages = [
   {
@@ -97,6 +99,8 @@ export function TicketPackages() {
     promoCode: "",
   })
 
+  const { sectionCounts, isLoading: isLoadingAllTickets, mutate: refreshAllTickets } = useAllTickets()
+
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const sectionParam = urlParams.get("section")
@@ -171,17 +175,27 @@ export function TicketPackages() {
     }
 
     try {
-      // Convert selected tickets to numbers
       const ticketNumbers = selectedTickets.map((t) => Number.parseInt(t))
       const totalAmount = selectedPackage ? getSelectedPackageInfo()?.price || 0 : selectedTickets.length * 20
 
-      const purchase = await createPurchaseWithoutAuth({
-        ticket_numbers: ticketNumbers,
-        total_amount: totalAmount,
+      console.log("[v0] Starting purchase process...")
+      console.log("[v0] Ticket numbers:", ticketNumbers)
+      console.log("[v0] Total amount:", totalAmount)
+
+      const result = await createPurchaseAction({
+        ticketNumbers,
+        totalAmount,
       })
 
-      // Generate WhatsApp message
-      const ticketId = purchase.ticketId
+      if (!result.success) {
+        throw new Error(result.error || "Error desconocido")
+      }
+
+      const purchase = result.purchase
+      console.log("[v0] Purchase created successfully:", purchase)
+
+      const ticketId = `TKT-${purchase.id.slice(0, 8).toUpperCase()}`
+
       const message = `Hola, soy ${purchaseForm.firstName} ${purchaseForm.lastName}
 
 📋 *ID de Reserva:* ${ticketId}
@@ -204,16 +218,13 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
 
 ¡Gracias por tu compra! 🎉`
 
-      // Open WhatsApp
       openWhatsApp("+5212216250235", message)
 
-      // Close dialog and reset
       setShowPurchaseDialog(false)
       alert(
         `¡Reserva creada exitosamente! 🎉\n\nID: ${ticketId}\n\nTus boletos han sido reservados.\nTe hemos redirigido a WhatsApp para completar tu pago.`,
       )
 
-      // Reset form and selections
       setPurchaseForm({
         firstName: "",
         lastName: "",
@@ -225,10 +236,23 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
       setSelectedPackage(null)
       setAssignedPackageTickets([])
 
+      refreshAllTickets()
+      if (openSectionDialog !== null) {
+        fetchTicketsForSection(openSectionDialog)
+      }
+
       window.location.reload()
     } catch (error) {
       console.error("[v0] Error creating purchase:", error)
-      alert("Error al crear la reserva. Por favor intenta de nuevo.")
+
+      let errorMessage = "Error al crear la reserva. Por favor intenta de nuevo."
+
+      if (error instanceof Error) {
+        console.error("[v0] Error details:", error.message)
+        errorMessage = `Error: ${error.message}`
+      }
+
+      alert(errorMessage)
     }
   }
 
@@ -262,29 +286,6 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
     setSelectedTickets((prev) =>
       prev.includes(ticketNumber) ? prev.filter((t) => t !== ticketNumber) : [...prev, ticketNumber],
     )
-  }
-
-  const generateTicketNumbers = (sectionIndex: number) => {
-    if (ticketData[sectionIndex]) {
-      return ticketData[sectionIndex].map((ticket) => ({
-        number: ticket.ticket_number.toString().padStart(4, "0"),
-        available: ticket.is_available,
-      }))
-    }
-
-    // Fallback to generated data if not loaded yet
-    const startNum = sectionIndex * 1000
-    const tickets = []
-
-    for (let i = 0; i < 1000; i++) {
-      const ticketNumber = startNum + i
-      tickets.push({
-        number: ticketNumber.toString().padStart(4, "0"),
-        available: true,
-      })
-    }
-
-    return tickets
   }
 
   const handlePurchaseFromTable = (sectionTickets: string[]) => {
@@ -538,6 +539,16 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
             Números de <span className="text-amber-600">Boletos Disponibles</span>
           </h2>
           <p className="text-slate-600">10,000 boletos disponibles - ¡Elige tus números de la suerte!</p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refreshAllTickets()}
+            className="mt-2 border-amber-300 text-amber-600 hover:bg-amber-50"
+            disabled={isLoadingAllTickets}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingAllTickets ? "animate-spin" : ""}`} />
+            Actualizar Disponibilidad
+          </Button>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -545,8 +556,8 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
             const startNum = i * 1000
             const endNum = startNum + 999
             const sectionTickets = ticketData[i] || []
-            const availableTickets =
-              sectionTickets.length > 0 ? sectionTickets.filter((t) => t.is_available).length : 1000
+            const sectionInfo = sectionCounts.find((s) => s.section === i)
+            const availableTickets = sectionInfo?.available || 1000
 
             return (
               <Dialog
@@ -570,7 +581,13 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-slate-800">{availableTickets}</div>
+                        <div className="text-2xl font-bold text-slate-800">
+                          {isLoadingAllTickets ? (
+                            <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
+                          ) : (
+                            availableTickets
+                          )}
+                        </div>
                         <div className="text-sm text-slate-500">Disponibles</div>
                         <div className="w-full bg-slate-200 rounded-full h-2 mt-2">
                           <div
@@ -578,81 +595,21 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
                             style={{ width: `${(availableTickets / 1000) * 100}%` }}
                           ></div>
                         </div>
+                        <div className="text-xs text-slate-400 mt-1">Actualizado en tiempo real</div>
                       </div>
                     </CardContent>
                   </Card>
                 </DialogTrigger>
 
                 <DialogContent className="max-w-4xl max-h-[80vh] bg-white border-slate-200">
-                  <DialogHeader>
-                    <DialogTitle className="text-amber-600 text-xl">
-                      Boletos {startNum.toString().padStart(4, "0")} - {endNum.toString().padStart(4, "0")}
-                    </DialogTitle>
-                  </DialogHeader>
-
-                  {loadingTickets[i] ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="overflow-y-auto max-h-[60vh]">
-                        <div className="grid grid-cols-10 gap-2 p-4">
-                          {generateTicketNumbers(i).map((ticket) => (
-                            <Button
-                              key={ticket.number}
-                              variant="outline"
-                              size="sm"
-                              className={`h-8 text-xs ${
-                                !ticket.available
-                                  ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed opacity-50"
-                                  : selectedTickets.includes(ticket.number)
-                                    ? "bg-amber-500 text-white border-amber-500"
-                                    : "border-slate-300 text-slate-700 bg-white hover:bg-amber-500 hover:text-white hover:border-amber-500"
-                              }`}
-                              onClick={() => toggleTicketSelection(ticket.number, ticket.available)}
-                              disabled={!ticket.available}
-                            >
-                              {ticket.number}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center pt-4 border-t border-slate-200">
-                        <div className="flex gap-4 text-sm">
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 border border-slate-300 bg-white rounded"></div>
-                            <span className="text-slate-600">Disponible</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 bg-amber-500 rounded"></div>
-                            <span className="text-slate-600">Seleccionado</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 bg-gray-400 rounded"></div>
-                            <span className="text-slate-600">Vendido</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <p className="text-amber-600 font-semibold">{availableTickets} boletos disponibles</p>
-                          {selectedTickets.filter((ticket) => {
-                            const ticketNum = Number.parseInt(ticket)
-                            return ticketNum >= startNum && ticketNum <= endNum
-                          }).length > 0 && (
-                            <Button
-                              onClick={() => handlePurchaseFromTable(generateTicketNumbers(i).map((t) => t.number))}
-                              className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                              size="sm"
-                            >
-                              <ShoppingCart className="h-4 w-4 mr-1" />
-                              Comprar Seleccionados
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  )}
+                  <SectionDialogContent
+                    sectionIndex={i}
+                    startNum={startNum}
+                    endNum={endNum}
+                    selectedTickets={selectedTickets}
+                    toggleTicketSelection={toggleTicketSelection}
+                    handlePurchaseFromTable={handlePurchaseFromTable}
+                  />
                 </DialogContent>
               </Dialog>
             )
@@ -833,7 +790,7 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
               </Button>
               <Button
                 onClick={handlePayNow}
-                className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold"
+                className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-emerald-700 text-white font-bold"
               >
                 Pagar Ahora
               </Button>
@@ -842,5 +799,124 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+function SectionDialogContent({
+  sectionIndex,
+  startNum,
+  endNum,
+  selectedTickets,
+  toggleTicketSelection,
+  handlePurchaseFromTable,
+}: {
+  sectionIndex: number
+  startNum: number
+  endNum: number
+  selectedTickets: string[]
+  toggleTicketSelection: (ticketNumber: string, isAvailable: boolean) => void
+  handlePurchaseFromTable: (sectionTickets: string[]) => void
+}) {
+  const { tickets, availableCount, isLoading } = useTicketsByRange(startNum, endNum, true)
+
+  const generateTicketNumbers = () => {
+    if (tickets.length > 0) {
+      return tickets.map((ticket) => ({
+        number: ticket.ticket_number.toString().padStart(4, "0"),
+        available: ticket.is_available,
+      }))
+    }
+
+    // Fallback to generating all tickets if no data
+    const ticketList = []
+    for (let i = 0; i < 1000; i++) {
+      const ticketNumber = startNum + i
+      ticketList.push({
+        number: ticketNumber.toString().padStart(4, "0"),
+        available: true,
+      })
+    }
+    return ticketList
+  }
+
+  const ticketNumbers = generateTicketNumbers()
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="text-amber-600 text-xl flex items-center justify-between">
+          <span>
+            Boletos {startNum.toString().padStart(4, "0")} - {endNum.toString().padStart(4, "0")}
+          </span>
+          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
+            {availableCount} disponibles
+          </Badge>
+        </DialogTitle>
+      </DialogHeader>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+        </div>
+      ) : (
+        <>
+          <div className="overflow-y-auto max-h-[60vh]">
+            <div className="grid grid-cols-10 gap-2 p-4">
+              {ticketNumbers.map((ticket) => (
+                <Button
+                  key={ticket.number}
+                  variant="outline"
+                  size="sm"
+                  className={`h-8 text-xs ${
+                    !ticket.available
+                      ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed opacity-50"
+                      : selectedTickets.includes(ticket.number)
+                        ? "bg-amber-500 text-white border-amber-500"
+                        : "border-slate-300 text-slate-700 bg-white hover:bg-amber-500 hover:text-white hover:border-amber-500"
+                  }`}
+                  onClick={() => toggleTicketSelection(ticket.number, ticket.available)}
+                  disabled={!ticket.available}
+                >
+                  {ticket.number}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center pt-4 border-t border-slate-200">
+            <div className="flex gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 border border-slate-300 bg-white rounded"></div>
+                <span className="text-slate-600">Disponible</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-amber-500 rounded"></div>
+                <span className="text-slate-600">Seleccionado</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-gray-400 rounded"></div>
+                <span className="text-slate-600">Vendido</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <p className="text-amber-600 font-semibold">{availableCount} boletos disponibles</p>
+              {selectedTickets.filter((ticket) => {
+                const ticketNum = Number.parseInt(ticket)
+                return ticketNum >= startNum && ticketNum <= endNum
+              }).length > 0 && (
+                <Button
+                  onClick={() => handlePurchaseFromTable(ticketNumbers.map((t) => t.number))}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                  size="sm"
+                >
+                  <ShoppingCart className="h-4 w-4 mr-1" />
+                  Comprar Seleccionados
+                </Button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </>
   )
 }
