@@ -184,6 +184,16 @@ export async function createPurchaseWithoutAuth(purchaseData: {
     // Generate unique ticket ID
     const ticketId = `TKT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999999) + 1).padStart(6, "0")}`
 
+    const { error: ticketError } = await supabase
+      .from("tickets")
+      .update({ is_available: false })
+      .in("ticket_number", purchaseData.ticket_numbers)
+
+    if (ticketError) {
+      console.error("[v0] Error reserving tickets:", ticketError)
+      throw ticketError
+    }
+
     const { data, error } = await supabase
       .from("purchases")
       .insert({
@@ -197,10 +207,11 @@ export async function createPurchaseWithoutAuth(purchaseData: {
 
     if (error) {
       console.error("[v0] Error creating purchase:", error)
+      await supabase.from("tickets").update({ is_available: true }).in("ticket_number", purchaseData.ticket_numbers)
       throw error
     }
 
-    console.log("[v0] Purchase created successfully:", data)
+    console.log("[v0] Purchase created successfully with reserved tickets:", data)
     return { ...data, ticketId }
   } catch (error) {
     console.error("[v0] Unexpected error in createPurchaseWithoutAuth:", error)

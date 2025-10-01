@@ -175,7 +175,6 @@ export function TicketPackages() {
       const ticketNumbers = selectedTickets.map((t) => Number.parseInt(t))
       const totalAmount = selectedPackage ? getSelectedPackageInfo()?.price || 0 : selectedTickets.length * 20
 
-      // Create purchase in database
       const purchase = await createPurchaseWithoutAuth({
         ticket_numbers: ticketNumbers,
         total_amount: totalAmount,
@@ -190,16 +189,18 @@ export function TicketPackages() {
 🎫 *Boletos Reservados:* ${selectedTickets.length}
 ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y ${selectedTickets.length - 20} más` : ""}
 
-💰 *Total a Pagar:* $${totalAmount}
+💰 *Total a Pagar:* $${totalAmount} MXN
 
 📍 *Estado:* ${purchaseForm.state}
 📱 *Teléfono:* ${purchaseForm.phoneNumber}
 
 *Pasos para completar tu compra:*
-1. Realiza la transferencia bancaria por $${totalAmount}
-2. Envía tu comprobante de pago a este número
-3. Incluye tu ID de Reserva: ${ticketId}
-4. Espera la confirmación (máximo 24 horas)
+1️⃣ Realiza la transferencia bancaria por $${totalAmount} MXN
+2️⃣ Envía tu comprobante de pago a este número
+3️⃣ Incluye tu ID de Reserva: ${ticketId}
+4️⃣ Espera la confirmación (máximo 24 horas)
+
+⚠️ *Importante:* Tus boletos están reservados por 24 horas. Si no recibes el pago en ese tiempo, la reserva será cancelada.
 
 ¡Gracias por tu compra! 🎉`
 
@@ -208,7 +209,9 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
 
       // Close dialog and reset
       setShowPurchaseDialog(false)
-      alert(`¡Reserva creada! ID: ${ticketId}\n\nTe hemos redirigido a WhatsApp para completar tu pago.`)
+      alert(
+        `¡Reserva creada exitosamente! 🎉\n\nID: ${ticketId}\n\nTus boletos han sido reservados.\nTe hemos redirigido a WhatsApp para completar tu pago.`,
+      )
 
       // Reset form and selections
       setPurchaseForm({
@@ -221,6 +224,8 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
       setSelectedTickets([])
       setSelectedPackage(null)
       setAssignedPackageTickets([])
+
+      window.location.reload()
     } catch (error) {
       console.error("[v0] Error creating purchase:", error)
       alert("Error al crear la reserva. Por favor intenta de nuevo.")
