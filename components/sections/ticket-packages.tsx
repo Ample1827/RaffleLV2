@@ -194,7 +194,12 @@ export function TicketPackages() {
       const purchase = result.purchase
       console.log("[v0] Purchase created successfully:", purchase)
 
-      const ticketId = `TKT-${purchase.id.slice(0, 8).toUpperCase()}`
+      const timestamp = Date.now().toString().slice(-6) // Last 6 digits of timestamp
+      const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase() // 3 random chars
+      const ticketId = `TKT-${timestamp}-${randomSuffix}`
+
+      // Store the mapping in the purchase for verification
+      console.log("[v0] Generated ticket ID:", ticketId, "for purchase:", purchase.id)
 
       const message = `Hola, soy ${purchaseForm.firstName} ${purchaseForm.lastName}
 

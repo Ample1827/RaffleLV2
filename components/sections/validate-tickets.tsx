@@ -246,11 +246,11 @@ export function ValidateTickets() {
                 <div className="space-y-4">
                   <Separator />
 
-                  <div className="p-6 bg-slate-50/50 rounded-lg border border-slate-200">
+                  <div className="p-6 bg-gradient-to-br from-slate-50 to-white rounded-xl border-2 border-slate-200 shadow-sm">
                     <div className="flex items-center gap-3 mb-4">
                       {getStatusIcon(validationResult.status)}
                       <div>
-                        <h3 className="font-semibold text-slate-800">Resultado de Validación</h3>
+                        <h3 className="font-semibold text-slate-800 text-lg">Resultado de Validación</h3>
                         <Badge className={getStatusColor(validationResult.status)}>
                           {getStatusText(validationResult.status)}
                         </Badge>
@@ -258,65 +258,83 @@ export function ValidateTickets() {
                     </div>
 
                     {validationResult.status !== "invalid" ? (
-                      <div className="space-y-3">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-slate-500">ID del Boleto:</span>
-                            <div className="font-mono font-medium text-slate-800">{validationResult.id}</div>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4 text-sm bg-white p-4 rounded-lg border border-slate-200">
+                          <div className="space-y-1">
+                            <span className="text-slate-500 text-xs uppercase tracking-wide">ID del Boleto</span>
+                            <div className="font-mono font-semibold text-slate-800 text-base">
+                              {validationResult.id}
+                            </div>
                           </div>
-                          <div>
-                            <span className="text-slate-500">Fecha de Compra:</span>
+                          <div className="space-y-1">
+                            <span className="text-slate-500 text-xs uppercase tracking-wide">Fecha de Compra</span>
                             <div className="font-medium text-slate-800">{validationResult.purchaseDate}</div>
                           </div>
-                          <div>
-                            <span className="text-slate-500">Fecha del Sorteo:</span>
+                          <div className="space-y-1">
+                            <span className="text-slate-500 text-xs uppercase tracking-wide">Fecha del Sorteo</span>
                             <div className="font-medium text-slate-800">{validationResult.drawDate}</div>
                           </div>
-                          <div>
-                            <span className="text-slate-500">Categoría del Premio:</span>
+                          <div className="space-y-1">
+                            <span className="text-slate-500 text-xs uppercase tracking-wide">Categoría del Premio</span>
                             <div className="font-medium text-slate-800">{validationResult.prize}</div>
                           </div>
                         </div>
 
                         <Separator />
 
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Valor del Premio:</span>
-                          <span className="text-xl font-bold text-amber-600">{validationResult.value}</span>
+                        <div className="flex items-center justify-between bg-amber-50 p-4 rounded-lg border border-amber-200">
+                          <span className="text-slate-700 font-medium">Valor del Premio</span>
+                          <span className="text-2xl font-bold text-amber-600">{validationResult.value}</span>
                         </div>
 
                         {validationResult.status === "valid" && (
-                          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                            <div className="flex items-center gap-2 text-green-700 text-sm">
-                              <CheckCircle className="w-4 h-4" />
-                              ¡Este boleto es válido y elegible para el próximo sorteo!
+                          <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl shadow-sm">
+                            <div className="flex items-center gap-3 text-green-700">
+                              <CheckCircle className="w-6 h-6 flex-shrink-0" />
+                              <div>
+                                <p className="font-semibold text-base">¡Boleto Válido!</p>
+                                <p className="text-sm text-green-600">Este boleto es elegible para el próximo sorteo</p>
+                              </div>
                             </div>
                           </div>
                         )}
 
                         {validationResult.status === "pending" && (
-                          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <div className="flex items-center gap-2 text-yellow-700 text-sm">
-                              <Clock className="w-4 h-4" />
-                              Este boleto está pendiente de verificación de pago.
+                          <div className="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-xl shadow-sm">
+                            <div className="flex items-center gap-3 text-yellow-700">
+                              <Clock className="w-6 h-6 flex-shrink-0" />
+                              <div>
+                                <p className="font-semibold text-base">Verificación Pendiente</p>
+                                <p className="text-sm text-yellow-600">
+                                  Este boleto está en proceso de verificación de pago
+                                </p>
+                              </div>
                             </div>
                           </div>
                         )}
 
                         {validationResult.status === "owned" && (
-                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div className="flex items-center gap-2 text-blue-700 text-sm">
-                              <Ticket className="w-4 h-4" />
-                              Este boleto ha sido comprado y te pertenece.
+                          <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-xl shadow-sm">
+                            <div className="flex items-center gap-3 text-blue-700">
+                              <Ticket className="w-6 h-6 flex-shrink-0" />
+                              <div>
+                                <p className="font-semibold text-base">¡Tu Boleto!</p>
+                                <p className="text-sm text-blue-600">Este boleto ha sido comprado y te pertenece</p>
+                              </div>
                             </div>
                           </div>
                         )}
                       </div>
                     ) : (
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <div className="flex items-center gap-2 text-red-700 text-sm">
-                          <XCircle className="w-4 h-4" />
-                          ID de boleto inválido. Por favor verifica tu boleto e intenta de nuevo.
+                      <div className="p-4 bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-300 rounded-xl shadow-sm">
+                        <div className="flex items-center gap-3 text-red-700">
+                          <XCircle className="w-6 h-6 flex-shrink-0" />
+                          <div>
+                            <p className="font-semibold text-base">Boleto Inválido</p>
+                            <p className="text-sm text-red-600">
+                              ID de boleto inválido. Por favor verifica tu boleto e intenta de nuevo
+                            </p>
+                          </div>
                         </div>
                       </div>
                     )}

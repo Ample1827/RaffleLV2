@@ -7,7 +7,7 @@ export interface Purchase {
   ticket_numbers: string[]
   quantity: number
   total_amount: number
-  status: "pending" | "bought"
+  status: "pending" | "approved"
   created_at: string
   updated_at: string
 }
@@ -96,7 +96,7 @@ export async function getAllPurchases() {
   }
 }
 
-export async function updatePurchaseStatus(purchaseId: string, status: "pending" | "bought") {
+export async function updatePurchaseStatus(purchaseId: string, status: "pending" | "approved") {
   const supabase = createClient()
 
   try {
@@ -259,7 +259,7 @@ export async function createPurchaseWithoutAuth(purchaseData: {
   }
 }
 
-export async function updatePurchaseStatusAndTickets(purchaseId: string, status: "pending" | "bought") {
+export async function updatePurchaseStatusAndTickets(purchaseId: string, status: "pending" | "approved") {
   const supabase = createClient()
 
   try {
@@ -291,7 +291,7 @@ export async function updatePurchaseStatusAndTickets(purchaseId: string, status:
       throw updateError
     }
 
-    if (status === "bought" && purchase.ticket_numbers && purchase.ticket_numbers.length > 0) {
+    if (status === "approved" && purchase.ticket_numbers && purchase.ticket_numbers.length > 0) {
       console.log("[v0] Marking tickets as unavailable:", purchase.ticket_numbers)
 
       const { error: ticketError } = await supabase

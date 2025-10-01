@@ -13,12 +13,24 @@ import { Label } from "@/components/ui/label"
 import { getAllPurchasesAdmin, updatePurchaseStatusAdmin, deletePurchaseAdmin } from "@/app/actions/admin-actions"
 import { seedTickets } from "@/app/actions/seed-tickets"
 import { checkTicketCount } from "@/app/actions/check-tickets"
-import { ShoppingCart, Clock, CheckCircle, Calendar, Ticket, DollarSign, LogOut, Trash2, Database } from "lucide-react"
+import {
+  ShoppingCart,
+  Clock,
+  CheckCircle,
+  Calendar,
+  Ticket,
+  DollarSign,
+  LogOut,
+  Trash2,
+  Database,
+  Shield,
+  Lock,
+} from "lucide-react"
 
 interface AdminStats {
   totalPurchases: number
   pendingPurchases: number
-  boughtPurchases: number
+  approvedPurchases: number
   totalRevenue: number
 }
 
@@ -31,7 +43,7 @@ export default function AdminPage() {
   const [stats, setStats] = useState<AdminStats>({
     totalPurchases: 0,
     pendingPurchases: 0,
-    boughtPurchases: 0,
+    approvedPurchases: 0,
     totalRevenue: 0,
   })
   const [loading, setLoading] = useState(false)
@@ -87,14 +99,14 @@ export default function AdminPage() {
 
       const totalPurchases = purchasesData?.length || 0
       const pendingPurchases = purchasesData?.filter((p) => p.status === "pending").length || 0
-      const boughtPurchases = purchasesData?.filter((p) => p.status === "bought").length || 0
+      const approvedPurchases = purchasesData?.filter((p) => p.status === "approved").length || 0
       const totalRevenue =
-        purchasesData?.filter((p) => p.status === "bought").reduce((sum, p) => sum + p.total_amount, 0) || 0
+        purchasesData?.filter((p) => p.status === "approved").reduce((sum, p) => sum + p.total_amount, 0) || 0
 
       setStats({
         totalPurchases,
         pendingPurchases,
-        boughtPurchases,
+        approvedPurchases,
         totalRevenue,
       })
     } catch (error) {
@@ -108,15 +120,17 @@ export default function AdminPage() {
     setUpdating(true)
     try {
       console.log("[v0] [Admin Page] Marking purchase as sold:", purchaseId)
-      const result = await updatePurchaseStatusAdmin(purchaseId, "bought")
+      const result = await updatePurchaseStatusAdmin(purchaseId, "approved")
       console.log("[v0] [Admin Page] Update result:", result)
       await fetchAdminData() // Refresh data
       setSelectedPurchase(null)
       alert("Boletos marcados como vendidos y actualizados en todo el sitio")
     } catch (error) {
       console.error("[v0] [Admin Page] Error updating purchase status:", error)
-      const errorMessage = error instanceof Error ? error.message : "Error desconocido"
-      alert(`Error al actualizar el estado de la compra: ${errorMessage}`)
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido al actualizar el estado"
+      alert(
+        `Error al actualizar el estado de la compra:\n\n${errorMessage}\n\nPor favor, intenta de nuevo o contacta soporte.`,
+      )
     } finally {
       setUpdating(false)
     }
@@ -133,8 +147,10 @@ export default function AdminPage() {
       alert("Boletos marcados como pendientes y disponibles nuevamente")
     } catch (error) {
       console.error("[v0] [Admin Page] Error updating purchase status:", error)
-      const errorMessage = error instanceof Error ? error.message : "Error desconocido"
-      alert(`Error al actualizar el estado de la compra: ${errorMessage}`)
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido al actualizar el estado"
+      alert(
+        `Error al actualizar el estado de la compra:\n\n${errorMessage}\n\nPor favor, intenta de nuevo o contacta soporte.`,
+      )
     } finally {
       setUpdating(false)
     }
@@ -208,7 +224,7 @@ export default function AdminPage() {
             Pendiente
           </Badge>
         )
-      case "bought":
+      case "approved":
         return (
           <Badge variant="secondary" className="bg-gray-400 text-gray-800 border-gray-500">
             <CheckCircle className="h-3 w-3 mr-1" />
@@ -232,16 +248,37 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Admin Login</CardTitle>
-            <CardDescription className="text-center">Ingresa tus credenciales para acceder al panel</CardDescription>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900 flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl"></div>
+        </div>
+
+        <Card className="w-full max-w-md relative z-10 shadow-2xl border-slate-700 bg-white/95 backdrop-blur-sm">
+          <CardHeader className="space-y-4 pb-6">
+            <div className="flex justify-center">
+              <div className="p-4 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl shadow-lg">
+                <Shield className="h-12 w-12 text-white" />
+              </div>
+            </div>
+            <div className="text-center space-y-2">
+              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-amber-600 to-amber-500 bg-clip-text text-transparent">
+                Panel de Administración
+              </CardTitle>
+              <CardDescription className="text-slate-600 text-base">
+                Ingresa tus credenciales para acceder
+              </CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-slate-700 font-semibold flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-amber-600" />
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -249,10 +286,14 @@ export default function AdminPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="h-12 bg-slate-50 border-slate-300 focus:border-amber-500 focus:ring-amber-500"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password" className="text-slate-700 font-semibold flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-amber-600" />
+                  Contraseña
+                </Label>
                 <Input
                   id="password"
                   type="password"
@@ -260,16 +301,25 @@ export default function AdminPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="h-12 bg-slate-50 border-slate-300 focus:border-amber-500 focus:ring-amber-500"
                 />
               </div>
-              {loginError && <p className="text-sm text-red-500">{loginError}</p>}
-              <Button type="submit" className="w-full bg-amber-600 hover:bg-amber-700">
+              {loginError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600 font-medium">{loginError}</p>
+                </div>
+              )}
+              <Button
+                type="submit"
+                className="w-full h-12 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-lg shadow-lg"
+              >
+                <Shield className="mr-2 h-5 w-5" />
                 Iniciar Sesión
               </Button>
               <Button
                 type="button"
                 variant="outline"
-                className="w-full bg-transparent"
+                className="w-full h-12 bg-transparent border-slate-300 hover:bg-slate-50"
                 onClick={() => router.push("/")}
               >
                 Volver al Inicio
@@ -356,7 +406,7 @@ export default function AdminPage() {
               </div>
               <h3 className="text-sm font-semibold text-gray-900">Vendidos</h3>
             </div>
-            <p className="text-2xl font-bold text-gray-600">{stats.boughtPurchases}</p>
+            <p className="text-2xl font-bold text-gray-600">{stats.approvedPurchases}</p>
           </div>
 
           <div className="bg-white rounded-lg p-6 shadow-lg">
@@ -393,7 +443,7 @@ export default function AdminPage() {
                   >
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">Compra #{purchase.id.slice(-8).toUpperCase()}</CardTitle>
+                        <CardTitle className="text-lg">Compra #{purchase.id.slice(0, 13).toUpperCase()}</CardTitle>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(purchase.status)}
                           <Dialog>
@@ -409,7 +459,7 @@ export default function AdminPage() {
                             </DialogTrigger>
                             <DialogContent className="max-w-2xl">
                               <DialogHeader>
-                                <DialogTitle>Detalles de Compra #{purchase.id.slice(-8).toUpperCase()}</DialogTitle>
+                                <DialogTitle>Detalles de Compra #{purchase.id.slice(0, 13).toUpperCase()}</DialogTitle>
                               </DialogHeader>
 
                               {selectedPurchase && (
@@ -450,7 +500,7 @@ export default function AdminPage() {
                                         <Badge
                                           key={index}
                                           variant="secondary"
-                                          className={`text-xs ${selectedPurchase.status === "bought" ? "bg-gray-300 text-gray-700" : "bg-slate-100 text-slate-700"}`}
+                                          className={`text-xs ${selectedPurchase.status === "approved" ? "bg-gray-300 text-gray-700" : "bg-slate-100 text-slate-700"}`}
                                         >
                                           {ticketNum.toString().padStart(4, "0")}
                                         </Badge>
@@ -463,11 +513,11 @@ export default function AdminPage() {
                                     <div className="flex gap-3">
                                       <Button
                                         onClick={() => handleMarkAsSold(selectedPurchase.id)}
-                                        disabled={updating || selectedPurchase.status === "bought"}
+                                        disabled={updating || selectedPurchase.status === "approved"}
                                         className="flex-1 bg-gray-600 hover:bg-gray-700 text-white"
                                       >
                                         <CheckCircle className="h-4 w-4 mr-2" />
-                                        {selectedPurchase.status === "bought" ? "Ya Vendido" : "Marcar como Vendido"}
+                                        {selectedPurchase.status === "approved" ? "Ya Vendido" : "Marcar como Vendido"}
                                       </Button>
                                       <Button
                                         onClick={() => handleMarkAsPending(selectedPurchase.id)}

@@ -35,7 +35,7 @@ export async function getAllPurchasesAdmin() {
   }
 }
 
-export async function updatePurchaseStatusAdmin(purchaseId: string, status: "pending" | "bought") {
+export async function updatePurchaseStatusAdmin(purchaseId: string, status: "pending" | "approved") {
   const supabase = createAdminClient()
 
   try {
@@ -74,7 +74,6 @@ export async function updatePurchaseStatusAdmin(purchaseId: string, status: "pen
     if (purchase.ticket_numbers && purchase.ticket_numbers.length > 0) {
       console.log("[v0] [Admin] Updating ticket availability for status:", status)
 
-      // When marking as "bought", keep tickets unavailable
       // When marking as "pending", also keep tickets unavailable (reserved)
       const { error: ticketError } = await supabase
         .from("tickets")

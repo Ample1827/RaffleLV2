@@ -13,7 +13,7 @@ import { ShoppingCart, Clock, CheckCircle, Calendar, Ticket, DollarSign } from "
 interface AdminStats {
   totalPurchases: number
   pendingPurchases: number
-  boughtPurchases: number
+  approvedPurchases: number
   totalRevenue: number
 }
 
@@ -22,7 +22,7 @@ export function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats>({
     totalPurchases: 0,
     pendingPurchases: 0,
-    boughtPurchases: 0,
+    approvedPurchases: 0,
     totalRevenue: 0,
   })
   const [loading, setLoading] = useState(true)
@@ -57,14 +57,14 @@ export function AdminDashboard() {
 
       const totalPurchases = purchasesData?.length || 0
       const pendingPurchases = purchasesData?.filter((p) => p.status === "pending").length || 0
-      const boughtPurchases = purchasesData?.filter((p) => p.status === "bought").length || 0
+      const approvedPurchases = purchasesData?.filter((p) => p.status === "approved").length || 0
       const totalRevenue =
-        purchasesData?.filter((p) => p.status === "bought").reduce((sum, p) => sum + p.total_amount, 0) || 0
+        purchasesData?.filter((p) => p.status === "approved").reduce((sum, p) => sum + p.total_amount, 0) || 0
 
       setStats({
         totalPurchases,
         pendingPurchases,
-        boughtPurchases,
+        approvedPurchases,
         totalRevenue,
       })
     } catch (error) {
@@ -74,14 +74,14 @@ export function AdminDashboard() {
     }
   }
 
-  const handleUpdatePurchaseStatus = async (purchaseId: string, newStatus: "pending" | "bought") => {
+  const handleUpdatePurchaseStatus = async (purchaseId: string, newStatus: "pending" | "approved") => {
     setUpdating(true)
     try {
       console.log("[v0] Updating purchase status:", { purchaseId, newStatus })
       await updatePurchaseStatus(purchaseId, newStatus)
       await fetchAdminData() // Refresh data
       setSelectedPurchase(null)
-      alert(`Compra ${newStatus === "bought" ? "aprobada" : "marcada como pendiente"} exitosamente`)
+      alert(`Compra ${newStatus === "approved" ? "aprobada" : "marcada como pendiente"} exitosamente`)
     } catch (error) {
       console.error("[v0] Error updating purchase status:", error)
       alert("Error al actualizar el estado de la compra")
@@ -99,11 +99,11 @@ export function AdminDashboard() {
             Pendiente
           </Badge>
         )
-      case "bought":
+      case "approved":
         return (
           <Badge variant="secondary" className="bg-black text-white border-black">
             <CheckCircle className="h-3 w-3 mr-1" />
-            Comprado
+            Aprobado
           </Badge>
         )
       default:
@@ -164,9 +164,9 @@ export function AdminDashboard() {
               <div className="p-2 bg-black rounded-lg">
                 <CheckCircle className="h-6 w-6 text-white" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900">Compradas</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Aprobadas</h3>
             </div>
-            <p className="text-2xl font-bold text-black">{stats.boughtPurchases}</p>
+            <p className="text-2xl font-bold text-black">{stats.approvedPurchases}</p>
           </div>
 
           <div className="bg-white rounded-lg p-6 shadow-lg">
@@ -272,12 +272,12 @@ export function AdminDashboard() {
                                   <div className="space-y-4">
                                     <div className="flex gap-3">
                                       <Button
-                                        onClick={() => handleUpdatePurchaseStatus(selectedPurchase.id, "bought")}
-                                        disabled={updating || selectedPurchase.status === "bought"}
+                                        onClick={() => handleUpdatePurchaseStatus(selectedPurchase.id, "approved")}
+                                        disabled={updating || selectedPurchase.status === "approved"}
                                         className="flex-1 bg-black hover:bg-gray-800 text-white"
                                       >
                                         <CheckCircle className="h-4 w-4 mr-2" />
-                                        {selectedPurchase.status === "bought" ? "Ya Aprobada" : "Aprobar Compra"}
+                                        {selectedPurchase.status === "approved" ? "Ya Aprobada" : "Aprobar Compra"}
                                       </Button>
                                       <Button
                                         onClick={() => handleUpdatePurchaseStatus(selectedPurchase.id, "pending")}
