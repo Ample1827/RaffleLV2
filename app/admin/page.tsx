@@ -10,8 +10,9 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { getAllPurchases, updatePurchaseStatusAndTickets } from "@/lib/database"
-import { ShoppingCart, Clock, CheckCircle, Calendar, Ticket, DollarSign, LogOut } from "lucide-react"
+import { getAllPurchases, updatePurchaseStatusAndTickets, deletePurchase } from "@/lib/database"
+import { seedTickets } from "@/app/actions/seed-tickets"
+import { ShoppingCart, Clock, CheckCircle, Calendar, Ticket, DollarSign, LogOut, Trash2, Database } from "lucide-react"
 
 interface AdminStats {
   totalPurchases: number
@@ -35,6 +36,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false)
   const [selectedPurchase, setSelectedPurchase] = useState<any>(null)
   const [updating, setUpdating] = useState(false)
+  const [seeding, setSeeding] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -128,6 +130,46 @@ export default function AdminPage() {
       alert("Error al actualizar el estado de la compra")
     } finally {
       setUpdating(false)
+    }
+  }
+
+  const handleDeletePurchase = async (purchaseId: string) => {
+    if (!confirm("¿Estás seguro de que quieres eliminar esta compra? Los boletos volverán a estar disponibles.")) {
+      return
+    }
+
+    setUpdating(true)
+    try {
+      console.log("[v0] Deleting purchase:", purchaseId)
+      await deletePurchase(purchaseId)
+      await fetchAdminData() // Refresh data
+      setSelectedPurchase(null)
+      alert("Compra eliminada exitosamente. Los boletos están disponibles nuevamente.")
+    } catch (error) {
+      console.error("[v0] Error deleting purchase:", error)
+      alert("Error al eliminar la compra")
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleSeedDatabase = async () => {
+    if (!confirm("¿Estás seguro de que quieres inicializar la base de datos con 10,000 boletos?")) {
+      return
+    }
+
+    setSeeding(true)
+    try {
+      const result = await seedTickets()
+      alert(result.message)
+      if (result.success) {
+        await fetchAdminData()
+      }
+    } catch (error) {
+      console.error("Error seeding database:", error)
+      alert("Error al inicializar la base de datos")
+    } finally {
+      setSeeding(false)
     }
   }
 
@@ -229,10 +271,21 @@ export default function AdminPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Panel de Administración</h1>
             <p className="text-gray-600">Gestiona boletos y marca como vendidos</p>
           </div>
-          <Button onClick={handleLogout} variant="outline" className="gap-2 bg-transparent">
-            <LogOut className="h-4 w-4" />
-            Cerrar Sesión
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleSeedDatabase}
+              disabled={seeding}
+              variant="outline"
+              className="gap-2 bg-green-50 border-green-500 text-green-700 hover:bg-green-100"
+            >
+              <Database className="h-4 w-4" />
+              {seeding ? "Inicializando..." : "Inicializar Boletos"}
+            </Button>
+            <Button onClick={handleLogout} variant="outline" className="gap-2 bg-transparent">
+              <LogOut className="h-4 w-4" />
+              Cerrar Sesión
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -281,7 +334,7 @@ export default function AdminPage() {
         <div className="bg-white rounded-lg shadow-lg">
           <div className="p-6 border-b border-slate-200">
             <h2 className="text-xl font-semibold text-gray-900">Gestión de Boletos</h2>
-            <p className="text-gray-600">Revisa y marca boletos como vendidos</p>
+            <p className="text-gray-600">Revisa, marca como vendidos o elimina compras</p>
           </div>
 
           <div className="p-6">
@@ -352,7 +405,7 @@ export default function AdminPage() {
                                   {/* Ticket Numbers */}
                                   <div>
                                     <h4 className="font-semibold text-gray-900 mb-2">Números de Boletos</h4>
-                                    <div className="flex flex-wrap gap-1">
+                                    <div className="flex flex-wrap gap-1 max-h-40 overflow-y-auto">
                                       {selectedPurchase.ticket_numbers.map((ticketNum: string, index: number) => (
                                         <Badge
                                           key={index}
@@ -386,6 +439,15 @@ export default function AdminPage() {
                                         {selectedPurchase.status === "pending" ? "Ya Pendiente" : "Marcar Pendiente"}
                                       </Button>
                                     </div>
+                                    <Button
+                                      onClick={() => handleDeletePurchase(selectedPurchase.id)}
+                                      disabled={updating}
+                                      variant="outline"
+                                      className="w-full border-red-500 text-red-600 hover:bg-red-50"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Eliminar Compra
+                                    </Button>
                                   </div>
                                 </div>
                               )}

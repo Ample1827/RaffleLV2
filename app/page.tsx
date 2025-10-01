@@ -2,6 +2,7 @@ import { Navbar } from "@/components/navbar"
 import { Hero } from "@/components/sections/hero"
 import { HowItWorks } from "@/components/sections/how-it-works"
 import { PrizesShowcase } from "@/components/sections/prizes-showcase"
+import { TicketAvailability } from "@/components/sections/ticket-availability"
 import { Contact } from "@/components/sections/contact"
 import { Footer } from "@/components/sections/footer"
 
@@ -12,6 +13,7 @@ export default function LandingPage() {
       <main>
         <Hero />
         <PrizesShowcase />
+        <TicketAvailability />
         <HowItWorks />
         <Contact />
       </main>

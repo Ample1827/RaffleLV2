@@ -279,3 +279,99 @@ export async function updatePurchaseStatusAndTickets(purchaseId: string, status:
     throw error
   }
 }
+
+export async function deletePurchase(purchaseId: string) {
+  const supabase = createClient()
+
+  try {
+    console.log("[v0] Deleting purchase:", purchaseId)
+
+    // First, get the purchase to find ticket numbers
+    const { data: purchase, error: fetchError } = await supabase
+      .from("purchases")
+      .select("*")
+      .eq("id", purchaseId)
+      .single()
+
+    if (fetchError) {
+      console.error("[v0] Error fetching purchase:", fetchError)
+      throw fetchError
+    }
+
+    // Mark tickets as available again
+    if (purchase.ticket_numbers && purchase.ticket_numbers.length > 0) {
+      console.log("[v0] Releasing tickets:", purchase.ticket_numbers)
+
+      const { error: ticketError } = await supabase
+        .from("tickets")
+        .update({ is_available: true })
+        .in("ticket_number", purchase.ticket_numbers)
+
+      if (ticketError) {
+        console.error("[v0] Error releasing tickets:", ticketError)
+        throw ticketError
+      }
+    }
+
+    // Delete the purchase
+    const { error: deleteError } = await supabase.from("purchases").delete().eq("id", purchaseId)
+
+    if (deleteError) {
+      console.error("[v0] Error deleting purchase:", deleteError)
+      throw deleteError
+    }
+
+    console.log("[v0] Purchase deleted successfully")
+    return true
+  } catch (error) {
+    console.error("[v0] Unexpected error in deletePurchase:", error)
+    throw error
+  }
+}
+
+export async function updateTicketAvailability(ticketNumber: number, isAvailable: boolean) {
+  const supabase = createClient()
+
+  try {
+    console.log("[v0] Updating ticket availability:", { ticketNumber, isAvailable })
+
+    const { data, error } = await supabase
+      .from("tickets")
+      .update({ is_available: isAvailable })
+      .eq("ticket_number", ticketNumber)
+      .select()
+      .single()
+
+    if (error) {
+      console.error("[v0] Error updating ticket availability:", error)
+      throw error
+    }
+
+    console.log("[v0] Ticket availability updated successfully")
+    return data
+  } catch (error) {
+    console.error("[v0] Unexpected error in updateTicketAvailability:", error)
+    throw error
+  }
+}
+
+export async function getPurchaseDetails(purchaseId: string) {
+  const supabase = createClient()
+
+  try {
+    console.log("[v0] Fetching purchase details:", purchaseId)
+
+    const { data, error } = await supabase.from("purchases").select("*").eq("id", purchaseId).single()
+
+    if (error) {
+      console.error("[v0] Error fetching purchase details:", error)
+      throw error
+    }
+
+    console.log("[v0] Purchase details fetched successfully")
+    return data
+  } catch (error) {
+    console.error("[v0] Unexpected error in getPurchaseDetails:", error)
+    throw error
+  }
+}
