@@ -10,8 +10,9 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { getAllPurchases, updatePurchaseStatusAndTickets, deletePurchase } from "@/lib/database"
+import { getAllPurchasesAdmin, updatePurchaseStatusAdmin, deletePurchaseAdmin } from "@/app/actions/admin-actions"
 import { seedTickets } from "@/app/actions/seed-tickets"
+import { checkTicketCount } from "@/app/actions/check-tickets"
 import { ShoppingCart, Clock, CheckCircle, Calendar, Ticket, DollarSign, LogOut, Trash2, Database } from "lucide-react"
 
 interface AdminStats {
@@ -37,6 +38,8 @@ export default function AdminPage() {
   const [selectedPurchase, setSelectedPurchase] = useState<any>(null)
   const [updating, setUpdating] = useState(false)
   const [seeding, setSeeding] = useState(false)
+  const [ticketCount, setTicketCount] = useState<number | null>(null)
+  const [checkingTickets, setCheckingTickets] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -77,7 +80,7 @@ export default function AdminPage() {
     setLoading(true)
     try {
       console.log("[v0] Fetching admin data...")
-      const purchasesData = await getAllPurchases()
+      const purchasesData = await getAllPurchasesAdmin()
       console.log("[v0] Purchases data:", purchasesData)
 
       setPurchases(purchasesData || [])
@@ -105,7 +108,7 @@ export default function AdminPage() {
     setUpdating(true)
     try {
       console.log("[v0] Marking purchase as sold:", purchaseId)
-      await updatePurchaseStatusAndTickets(purchaseId, "bought")
+      await updatePurchaseStatusAdmin(purchaseId, "bought")
       await fetchAdminData() // Refresh data
       setSelectedPurchase(null)
       alert("Boletos marcados como vendidos y actualizados en todo el sitio")
@@ -121,7 +124,7 @@ export default function AdminPage() {
     setUpdating(true)
     try {
       console.log("[v0] Marking purchase as pending:", purchaseId)
-      await updatePurchaseStatusAndTickets(purchaseId, "pending")
+      await updatePurchaseStatusAdmin(purchaseId, "pending")
       await fetchAdminData() // Refresh data
       setSelectedPurchase(null)
       alert("Boletos marcados como pendientes y disponibles nuevamente")
@@ -141,7 +144,7 @@ export default function AdminPage() {
     setUpdating(true)
     try {
       console.log("[v0] Deleting purchase:", purchaseId)
-      await deletePurchase(purchaseId)
+      await deletePurchaseAdmin(purchaseId)
       await fetchAdminData() // Refresh data
       setSelectedPurchase(null)
       alert("Compra eliminada exitosamente. Los boletos están disponibles nuevamente.")
@@ -164,12 +167,31 @@ export default function AdminPage() {
       alert(result.message)
       if (result.success) {
         await fetchAdminData()
+        await handleCheckTickets()
       }
     } catch (error) {
       console.error("Error seeding database:", error)
       alert("Error al inicializar la base de datos")
     } finally {
       setSeeding(false)
+    }
+  }
+
+  const handleCheckTickets = async () => {
+    setCheckingTickets(true)
+    try {
+      const result = await checkTicketCount()
+      if (result.success) {
+        setTicketCount(result.count)
+        alert(`Total de boletos en la base de datos: ${result.count}`)
+      } else {
+        alert(`Error al verificar boletos: ${result.error}`)
+      }
+    } catch (error) {
+      console.error("Error checking tickets:", error)
+      alert("Error al verificar boletos")
+    } finally {
+      setCheckingTickets(false)
     }
   }
 
@@ -270,8 +292,22 @@ export default function AdminPage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Panel de Administración</h1>
             <p className="text-gray-600">Gestiona boletos y marca como vendidos</p>
+            {ticketCount !== null && (
+              <p className="text-sm text-green-600 font-semibold mt-1">
+                ✓ {ticketCount.toLocaleString()} boletos en la base de datos
+              </p>
+            )}
           </div>
           <div className="flex gap-2">
+            <Button
+              onClick={handleCheckTickets}
+              disabled={checkingTickets}
+              variant="outline"
+              className="gap-2 bg-blue-50 border-blue-500 text-blue-700 hover:bg-blue-100"
+            >
+              <Ticket className="h-4 w-4" />
+              {checkingTickets ? "Verificando..." : "Verificar Boletos"}
+            </Button>
             <Button
               onClick={handleSeedDatabase}
               disabled={seeding}
