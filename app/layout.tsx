@@ -2,7 +2,6 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter, Playfair_Display } from "next/font/google"
 import "./globals.css"
-import { AuthProvider } from "@/components/auth/auth-provider"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -45,9 +44,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className="font-sans antialiased">
-        <AuthProvider>{children}</AuthProvider>
-      </body>
+      <body className="font-sans antialiased">{children}</body>
     </html>
   )
 }

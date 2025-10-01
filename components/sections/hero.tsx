@@ -1,16 +1,13 @@
 "use client"
 
+import { Star, Users, Trophy, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Star, Users, Trophy } from "lucide-react"
-import { useState } from "react"
 
 export function Hero() {
-  const [selectedTickets, setSelectedTickets] = useState<string[]>([])
-
   const ticketSections = Array.from({ length: 10 }, (_, i) => {
     const start = i * 1000
     const end = start + 999
-    const available = 1000 // All tickets available to match buy tickets page
+    const available = 1000 // All tickets available
     return {
       range: `${start.toString().padStart(4, "0")}-${end.toString().padStart(4, "0")}`,
       available,
@@ -19,8 +16,12 @@ export function Hero() {
     }
   })
 
-  const handleTicketBoxClick = (sectionIndex: number) => {
-    window.location.href = `/buy-tickets?section=${sectionIndex}`
+  const handleContactWhatsApp = () => {
+    const phoneNumber = "5212345678901" // Replace with actual WhatsApp number
+    const message = encodeURIComponent(
+      "Hola! Estoy interesado en comprar boletos para la rifa. ¿Podrían darme más información?",
+    )
+    window.open(`https://api.whatsapp.com/send?phone=${phoneNumber}&text=${message}`, "_blank")
   }
 
   return (
@@ -52,10 +53,10 @@ export function Hero() {
               <Button
                 size="lg"
                 className="bg-primary hover:bg-primary/90 text-lg px-8 py-4"
-                onClick={() => (window.location.href = "/buy-tickets")}
+                onClick={handleContactWhatsApp}
               >
-                Comprar Boletos Ahora
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <MessageCircle className="mr-2 h-5 w-5" />
+                Contactar por WhatsApp
               </Button>
             </div>
 
@@ -94,37 +95,31 @@ export function Hero() {
                 {ticketSections.map((section) => (
                   <div
                     key={section.range}
-                    className="bg-slate-50 border-2 border-slate-200 rounded-lg p-4 cursor-pointer transition-all duration-300 hover:border-amber-400 hover:shadow-md hover:scale-105 group"
-                    onClick={() => handleTicketBoxClick(section.sectionIndex)}
+                    className="bg-slate-50 border-2 border-slate-200 rounded-lg p-4 transition-all duration-300"
                   >
                     <div className="text-center">
-                      <div className="font-bold text-slate-800 text-sm mb-1 group-hover:text-amber-600 transition-colors">
-                        {section.range}
-                      </div>
+                      <div className="font-bold text-slate-800 text-sm mb-1">{section.range}</div>
                       <div className="text-xs text-slate-600 mb-2">{section.available} Disponibles</div>
                       <div className="w-full bg-slate-200 rounded-full h-1.5">
                         <div
-                          className="bg-green-500 h-1.5 rounded-full transition-all group-hover:bg-amber-500"
+                          className="bg-green-500 h-1.5 rounded-full transition-all"
                           style={{ width: `${(section.available / section.total) * 100}%` }}
                         />
                       </div>
-                      <div className="text-xs font-medium text-slate-700 mt-1 group-hover:text-amber-600 transition-colors">
-                        100%
-                      </div>
+                      <div className="text-xs font-medium text-slate-700 mt-1">100%</div>
                     </div>
                   </div>
                 ))}
               </div>
 
               <div className="mt-6 text-center">
-                <p className="text-sm text-slate-500 mb-3">
-                  Haz clic en cualquier sección para ver y seleccionar boletos
-                </p>
+                <p className="text-sm text-slate-500 mb-3">Contacta por WhatsApp para comprar boletos</p>
                 <Button
                   className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold"
-                  onClick={() => (window.location.href = "/buy-tickets")}
+                  onClick={handleContactWhatsApp}
                 >
-                  Ver Todos los Boletos
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Contactar Ahora
                 </Button>
               </div>
             </div>

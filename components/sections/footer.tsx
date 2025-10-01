@@ -1,4 +1,5 @@
 import { Ticket, Facebook, Twitter, Instagram, Youtube } from "lucide-react"
+import Link from "next/link"
 
 export function Footer() {
   return (
@@ -99,13 +100,18 @@ export function Footer() {
         <div className="border-t border-gray-800 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              © 2024 RifaPro. Todos los derechos reservados. Con licencia y regulado.
+              © 2025 RifaPro. Todos los derechos reservados. Con licencia y regulado.
             </p>
             <div className="flex items-center space-x-6 mt-4 md:mt-0">
               <span className="text-gray-400 text-sm">🔒 SSL Seguro</span>
               <span className="text-gray-400 text-sm">✓ Juego Limpio Certificado</span>
               <span className="text-gray-400 text-sm">🏆 Premiado</span>
             </div>
+          </div>
+          <div className="mt-6 text-center">
+            <Link href="/admin" className="text-gray-500 hover:text-gray-300 text-xs transition-colors underline">
+              Admin Access
+            </Link>
           </div>
         </div>
       </div>

@@ -3,39 +3,34 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Menu, X, Ticket } from "lucide-react"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
-import { useAuth } from "@/components/auth/auth-provider"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
-  const { user, signOut, loading } = useAuth()
 
   const handleContactClick = (e: React.MouseEvent) => {
     e.preventDefault()
 
     // If we're on the home page, scroll to contact section
     if (pathname === "/") {
-      const contactSection = document.getElementById("contact")
+      const contactSection = document.getElementById("contacto")
       if (contactSection) {
         contactSection.scrollIntoView({ behavior: "smooth" })
       }
     } else {
       // If we're on another page, navigate to home page with contact hash
-      router.push("/#contact")
+      router.push("/#contacto")
     }
 
     // Close mobile menu if open
     setIsOpen(false)
   }
 
-  const handleSignOut = async () => {
-    await signOut()
-    router.push("/")
+  const closeMobileMenu = () => {
     setIsOpen(false)
   }
 
@@ -66,32 +61,6 @@ export function Navbar() {
             >
               Contacto
             </button>
-            {!loading && (
-              <>
-                {user ? (
-                  <div className="flex items-center space-x-4">
-                    <Link href="/dashboard">
-                      <Button className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white transition-all duration-300 shadow-lg">
-                        Ver Mis Compras
-                      </Button>
-                    </Link>
-                    <Button
-                      onClick={handleSignOut}
-                      variant="outline"
-                      className="border-white text-white hover:bg-white hover:text-black transition-all duration-300 bg-transparent"
-                    >
-                      Cerrar Sesión
-                    </Button>
-                  </div>
-                ) : (
-                  <Link href="/login">
-                    <Button className="bg-white text-black hover:bg-gray-100 transition-all duration-300 shadow-lg">
-                      Iniciar Sesión
-                    </Button>
-                  </Link>
-                )}
-              </>
-            )}
           </div>
 
           {/* Mobile menu button */}
@@ -111,22 +80,22 @@ export function Navbar() {
             <div className="flex flex-col space-y-4">
               <Link
                 href="/buy-tickets"
-                className="text-gray-300 hover:text-gold transition-colors duration-300"
-                onClick={() => setIsOpen(false)}
+                onClick={closeMobileMenu}
+                className="text-gray-300 hover:text-gold transition-colors duration-300 text-left"
               >
                 Comprar Boletos
               </Link>
               <Link
                 href="/verify-tickets"
-                className="text-gray-300 hover:text-gold transition-colors duration-300"
-                onClick={() => setIsOpen(false)}
+                onClick={closeMobileMenu}
+                className="text-gray-300 hover:text-gold transition-colors duration-300 text-left"
               >
                 Verificar Boletos
               </Link>
               <Link
                 href="/pagos"
-                className="text-gray-300 hover:text-gold transition-colors duration-300"
-                onClick={() => setIsOpen(false)}
+                onClick={closeMobileMenu}
+                className="text-gray-300 hover:text-gold transition-colors duration-300 text-left"
               >
                 Pagos
               </Link>
@@ -136,32 +105,6 @@ export function Navbar() {
               >
                 Contacto
               </button>
-              {!loading && (
-                <div className="flex flex-col space-y-2 pt-4">
-                  {user ? (
-                    <>
-                      <Link href="/dashboard" onClick={() => setIsOpen(false)}>
-                        <Button className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white transition-all duration-300 w-full shadow-lg">
-                          Ver Mis Compras
-                        </Button>
-                      </Link>
-                      <Button
-                        onClick={handleSignOut}
-                        variant="outline"
-                        className="border-white text-white hover:bg-white hover:text-black transition-all duration-300 w-full bg-transparent"
-                      >
-                        Cerrar Sesión
-                      </Button>
-                    </>
-                  ) : (
-                    <Link href="/login" onClick={() => setIsOpen(false)}>
-                      <Button className="bg-white text-black hover:bg-gray-100 transition-all duration-300 w-full shadow-lg">
-                        Iniciar Sesión
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         )}
