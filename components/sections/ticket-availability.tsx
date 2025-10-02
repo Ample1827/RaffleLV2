@@ -1,30 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { ChevronDown, ChevronUp, ShoppingCart } from "lucide-react"
-import { getTicketsByRange, createPurchaseWithoutAuth } from "@/lib/database"
+import { useState } from "react"
+import { createPurchaseWithoutAuth } from "@/lib/database"
 import { openWhatsApp } from "@/lib/whatsapp"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
+import { useAllTickets, useTicketsByRange } from "@/lib/hooks/use-tickets"
 
-interface Ticket {
-  id: string
-  ticket_number: number
-  is_available: boolean
-  created_at: string
-}
-
-interface TicketRange {
-  start: number
-  end: number
-  label: string
-}
-
-const TICKET_RANGES: TicketRange[] = [
+const TICKET_RANGES = [
   { start: 0, end: 999, label: "0000-0999" },
   { start: 1000, end: 1999, label: "1000-1999" },
   { start: 2000, end: 2999, label: "2000-2999" },
@@ -74,9 +56,6 @@ const mexicanStates = [
 
 export function TicketAvailability() {
   const [expandedRange, setExpandedRange] = useState<number | null>(null)
-  const [rangeTickets, setRangeTickets] = useState<{ [key: number]: Ticket[] }>({})
-  const [rangeStats, setRangeStats] = useState<{ [key: number]: { available: number; total: number } }>({})
-  const [loading, setLoading] = useState<{ [key: number]: boolean }>({})
   const [selectedTickets, setSelectedTickets] = useState<string[]>([])
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false)
   const [purchaseForm, setPurchaseForm] = useState({
@@ -87,50 +66,13 @@ export function TicketAvailability() {
     promoCode: "",
   })
 
-  // Load stats for all ranges on mount
-  useEffect(() => {
-    loadAllRangeStats()
-  }, [])
+  const { sectionCounts, isLoading, mutate: refreshAllTickets } = useAllTickets()
 
-  const loadAllRangeStats = async () => {
-    const stats: { [key: number]: { available: number; total: number } } = {}
-
-    for (let i = 0; i < TICKET_RANGES.length; i++) {
-      const range = TICKET_RANGES[i]
-      try {
-        const tickets = await getTicketsByRange(range.start, range.end)
-        const available = tickets?.filter((t) => t.is_available).length || 0
-        const total = tickets?.length || 0
-        stats[i] = { available, total }
-      } catch (error) {
-        console.error(`Error loading stats for range ${range.label}:`, error)
-        stats[i] = { available: 0, total: 0 }
-      }
-    }
-
-    setRangeStats(stats)
-  }
-
-  const toggleRange = async (index: number) => {
+  const toggleRange = (index: number) => {
     if (expandedRange === index) {
       setExpandedRange(null)
-      return
-    }
-
-    setExpandedRange(index)
-
-    // Load tickets if not already loaded
-    if (!rangeTickets[index]) {
-      setLoading({ ...loading, [index]: true })
-      try {
-        const range = TICKET_RANGES[index]
-        const tickets = await getTicketsByRange(range.start, range.end)
-        setRangeTickets({ ...rangeTickets, [index]: tickets || [] })
-      } catch (error) {
-        console.error("Error loading tickets:", error)
-      } finally {
-        setLoading({ ...loading, [index]: false })
-      }
+    } else {
+      setExpandedRange(index)
     }
   }
 
@@ -171,10 +113,12 @@ export function TicketAvailability() {
       const ticketNumbers = selectedTickets.map((t) => Number.parseInt(t))
       const totalAmount = selectedTickets.length * 20
 
-      // Create purchase in database
       const purchase = await createPurchaseWithoutAuth({
         ticket_numbers: ticketNumbers,
         total_amount: totalAmount,
+        buyer_name: `${purchaseForm.firstName} ${purchaseForm.lastName}`,
+        buyer_phone: purchaseForm.phoneNumber,
+        buyer_state: purchaseForm.state,
       })
 
       // Generate WhatsApp message
@@ -216,8 +160,7 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
       })
       setSelectedTickets([])
 
-      // Reload stats to reflect changes
-      loadAllRangeStats()
+      refreshAllTickets()
     } catch (error) {
       console.error("Error creating purchase:", error)
       alert("Error al crear la reserva. Por favor intenta de nuevo.")
@@ -233,7 +176,55 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
     return Math.round((available / total) * 100)
   }
 
+  return null
+}
+
+function ExpandedTicketRange({
+  startNumber,
+  endNumber,
+  selectedTickets,
+  toggleTicketSelection,
+}: {
+  startNumber: number
+  endNumber: number
+  selectedTickets: string[]
+  toggleTicketSelection: (ticketNumber: string, isAvailable: boolean) => void
+}) {
+  const { tickets, isLoading } = useTicketsByRange(startNumber, endNumber, true)
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+      </div>
+    )
+  }
+
+  const ticketNumbers = tickets.map((ticket) => ({
+    number: ticket.ticket_number.toString().padStart(4, "0"),
+    available: ticket.is_available,
+  }))
+
   return (
-    null
+    <div className="grid grid-cols-10 gap-2 p-4">
+      {ticketNumbers.map((ticket) => (
+        <Button
+          key={ticket.number}
+          variant="outline"
+          size="sm"
+          className={`h-8 text-xs ${
+            !ticket.available
+              ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed opacity-50"
+              : selectedTickets.includes(ticket.number)
+                ? "bg-amber-500 text-white border-amber-500"
+                : "border-slate-300 text-slate-700 bg-white hover:bg-amber-500 hover:text-white hover:border-amber-500"
+          }`}
+          onClick={() => toggleTicketSelection(ticket.number, ticket.available)}
+          disabled={!ticket.available}
+        >
+          {ticket.number}
+        </Button>
+      ))}
+    </div>
   )
 }

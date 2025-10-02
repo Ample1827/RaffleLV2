@@ -25,6 +25,10 @@ import {
   Database,
   Shield,
   Lock,
+  Search,
+  User,
+  Phone,
+  MapPin,
 } from "lucide-react"
 
 interface AdminStats {
@@ -40,6 +44,8 @@ export default function AdminPage() {
   const [password, setPassword] = useState("")
   const [loginError, setLoginError] = useState("")
   const [purchases, setPurchases] = useState<any[]>([])
+  const [filteredPurchases, setFilteredPurchases] = useState<any[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
   const [stats, setStats] = useState<AdminStats>({
     totalPurchases: 0,
     pendingPurchases: 0,
@@ -64,6 +70,23 @@ export default function AdminPage() {
       fetchAdminData()
     }
   }, [])
+
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredPurchases(purchases)
+    } else {
+      const query = searchQuery.toLowerCase()
+      const filtered = purchases.filter((purchase) => {
+        return (
+          purchase.reservation_id?.toLowerCase().includes(query) ||
+          purchase.buyer_name?.toLowerCase().includes(query) ||
+          purchase.buyer_phone?.includes(query) ||
+          purchase.id.toLowerCase().includes(query)
+        )
+      })
+      setFilteredPurchases(filtered)
+    }
+  }, [searchQuery, purchases])
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
@@ -96,6 +119,7 @@ export default function AdminPage() {
       console.log("[v0] Purchases data:", purchasesData)
 
       setPurchases(purchasesData || [])
+      setFilteredPurchases(purchasesData || [])
 
       const totalPurchases = purchasesData?.length || 0
       const pendingPurchases = purchasesData?.filter((p) => p.status === "pending").length || 0
@@ -226,7 +250,7 @@ export default function AdminPage() {
         )
       case "approved":
         return (
-          <Badge variant="secondary" className="bg-gray-400 text-gray-800 border-gray-500">
+          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200">
             <CheckCircle className="h-3 w-3 mr-1" />
             Vendido
           </Badge>
@@ -420,7 +444,29 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Purchases Management */}
+        <div className="bg-white rounded-lg shadow-lg mb-6 p-4">
+          <div className="flex items-center gap-3">
+            <Search className="h-5 w-5 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Buscar por ID de Reserva (TKT-xxx-xxx), nombre, teléfono o UUID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 h-12 text-base"
+            />
+            {searchQuery && (
+              <Button variant="ghost" onClick={() => setSearchQuery("")} className="text-gray-500">
+                Limpiar
+              </Button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-gray-600 mt-2">
+              Mostrando {filteredPurchases.length} de {purchases.length} compras
+            </p>
+          )}
+        </div>
+
         <div className="bg-white rounded-lg shadow-lg">
           <div className="p-6 border-b border-slate-200">
             <h2 className="text-xl font-semibold text-gray-900">Gestión de Boletos</h2>
@@ -428,22 +474,35 @@ export default function AdminPage() {
           </div>
 
           <div className="p-6">
-            {purchases.length === 0 ? (
+            {filteredPurchases.length === 0 ? (
               <div className="text-center py-12">
                 <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay compras registradas</h3>
-                <p className="text-gray-600">Las compras aparecerán aquí cuando los usuarios compren boletos.</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {searchQuery ? "No se encontraron compras" : "No hay compras registradas"}
+                </h3>
+                <p className="text-gray-600">
+                  {searchQuery
+                    ? "Intenta con otro término de búsqueda"
+                    : "Las compras aparecerán aquí cuando los usuarios compren boletos."}
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
-                {purchases.map((purchase) => (
+                {filteredPurchases.map((purchase) => (
                   <Card
                     key={purchase.id}
-                    className={`border ${purchase.status === "pending" ? "border-yellow-200 bg-yellow-50" : "border-gray-300 bg-gray-100"}`}
+                    className={`border ${purchase.status === "pending" ? "border-yellow-200 bg-yellow-50" : "border-emerald-200 bg-emerald-50"}`}
                   >
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">Compra #{purchase.id.slice(0, 13).toUpperCase()}</CardTitle>
+                        <div className="space-y-1">
+                          {purchase.reservation_id && (
+                            <div className="font-mono text-lg font-bold text-amber-600">{purchase.reservation_id}</div>
+                          )}
+                          <CardTitle className="text-sm text-gray-500">
+                            UUID: {purchase.id.slice(0, 13).toUpperCase()}
+                          </CardTitle>
+                        </div>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(purchase.status)}
                           <Dialog>
@@ -459,16 +518,60 @@ export default function AdminPage() {
                             </DialogTrigger>
                             <DialogContent className="max-w-2xl">
                               <DialogHeader>
-                                <DialogTitle>Detalles de Compra #{purchase.id.slice(0, 13).toUpperCase()}</DialogTitle>
+                                <DialogTitle>
+                                  {selectedPurchase?.reservation_id ||
+                                    `Compra #${selectedPurchase?.id.slice(0, 13).toUpperCase()}`}
+                                </DialogTitle>
                               </DialogHeader>
 
                               {selectedPurchase && (
                                 <div className="space-y-6">
-                                  {/* Purchase Info */}
+                                  {(selectedPurchase.buyer_name ||
+                                    selectedPurchase.buyer_phone ||
+                                    selectedPurchase.buyer_state) && (
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                        <User className="h-5 w-5 text-blue-600" />
+                                        Información del Comprador
+                                      </h4>
+                                      <div className="space-y-2">
+                                        {selectedPurchase.buyer_name && (
+                                          <div className="flex items-center gap-2 text-sm">
+                                            <User className="h-4 w-4 text-gray-500" />
+                                            <span className="font-medium">Nombre:</span>
+                                            <span>{selectedPurchase.buyer_name}</span>
+                                          </div>
+                                        )}
+                                        {selectedPurchase.buyer_phone && (
+                                          <div className="flex items-center gap-2 text-sm">
+                                            <Phone className="h-4 w-4 text-gray-500" />
+                                            <span className="font-medium">Teléfono:</span>
+                                            <span>{selectedPurchase.buyer_phone}</span>
+                                          </div>
+                                        )}
+                                        {selectedPurchase.buyer_state && (
+                                          <div className="flex items-center gap-2 text-sm">
+                                            <MapPin className="h-4 w-4 text-gray-500" />
+                                            <span className="font-medium">Estado:</span>
+                                            <span>{selectedPurchase.buyer_state}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-3">
                                       <h4 className="font-semibold text-gray-900">Información de Compra</h4>
                                       <div className="space-y-2">
+                                        {selectedPurchase.reservation_id && (
+                                          <div className="flex items-center gap-2">
+                                            <Ticket className="h-4 w-4 text-gray-500" />
+                                            <span className="text-sm font-mono font-semibold text-amber-600">
+                                              {selectedPurchase.reservation_id}
+                                            </span>
+                                          </div>
+                                        )}
                                         <div className="flex items-center gap-2">
                                           <Ticket className="h-4 w-4 text-gray-500" />
                                           <span className="text-sm">
@@ -492,7 +595,6 @@ export default function AdminPage() {
                                     </div>
                                   </div>
 
-                                  {/* Ticket Numbers */}
                                   <div>
                                     <h4 className="font-semibold text-gray-900 mb-2">Números de Boletos</h4>
                                     <div className="flex flex-wrap gap-1 max-h-40 overflow-y-auto">
@@ -500,7 +602,7 @@ export default function AdminPage() {
                                         <Badge
                                           key={index}
                                           variant="secondary"
-                                          className={`text-xs ${selectedPurchase.status === "approved" ? "bg-gray-300 text-gray-700" : "bg-slate-100 text-slate-700"}`}
+                                          className={`text-xs ${selectedPurchase.status === "approved" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"}`}
                                         >
                                           {ticketNum.toString().padStart(4, "0")}
                                         </Badge>
@@ -508,13 +610,12 @@ export default function AdminPage() {
                                     </div>
                                   </div>
 
-                                  {/* Admin Actions */}
                                   <div className="space-y-4">
                                     <div className="flex gap-3">
                                       <Button
                                         onClick={() => handleMarkAsSold(selectedPurchase.id)}
                                         disabled={updating || selectedPurchase.status === "approved"}
-                                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white"
+                                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                                       >
                                         <CheckCircle className="h-4 w-4 mr-2" />
                                         {selectedPurchase.status === "approved" ? "Ya Vendido" : "Marcar como Vendido"}
@@ -545,9 +646,18 @@ export default function AdminPage() {
                           </Dialog>
                         </div>
                       </div>
-                      <CardDescription className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        {formatDate(purchase.created_at)}
+                      <CardDescription className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          {formatDate(purchase.created_at)}
+                        </div>
+                        {purchase.buyer_name && (
+                          <div className="flex items-center gap-2 text-blue-600">
+                            <User className="h-4 w-4" />
+                            {purchase.buyer_name}
+                            {purchase.buyer_phone && ` • ${purchase.buyer_phone}`}
+                          </div>
+                        )}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>

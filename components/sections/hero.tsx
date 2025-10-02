@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Star, Users, Trophy, MessageCircle } from "lucide-react"
+import { Star, Users, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
@@ -18,7 +18,7 @@ export function Hero() {
     const start = i * 1000
     const end = start + 999
     const sectionInfo = sectionCounts.find((s) => s.section === i)
-    const available = sectionInfo?.available || 1000
+    const available = sectionInfo?.available ?? 0
 
     return {
       range: `${start.toString().padStart(4, "0")}-${end.toString().padStart(4, "0")}`,
@@ -27,14 +27,6 @@ export function Hero() {
       sectionIndex: i,
     }
   })
-
-  const handleContactWhatsApp = () => {
-    const phoneNumber = "5212345678901"
-    const message = encodeURIComponent(
-      "Hola! Estoy interesado en comprar boletos para la rifa. ¿Podrían darme más información?",
-    )
-    window.open(`https://api.whatsapp.com/send?phone=${phoneNumber}&text=${message}`, "_blank")
-  }
 
   const handleSectionClick = (sectionIndex: number) => {
     setOpenSectionDialog(sectionIndex)
@@ -83,30 +75,19 @@ export function Hero() {
               ensueño, tu próxima gran victoria está a solo un boleto de distancia.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-              <Button
-                size="lg"
-                className="bg-primary hover:bg-primary/90 text-lg px-8 py-4"
-                onClick={handleContactWhatsApp}
-              >
-                <MessageCircle className="mr-2 h-5 w-5" />
-                Contactar por WhatsApp
-              </Button>
-            </div>
-
             {/* Stats */}
             <div className="grid grid-cols-3 gap-8 text-center lg:text-left">
               <div>
                 <div className="flex items-center justify-center lg:justify-start space-x-2 mb-2">
                   <Trophy className="h-6 w-6 text-primary" />
-                  <span className="text-2xl font-bold text-foreground">$2M+</span>
+                  <span className="text-2xl font-bold text-foreground">$500k MXN</span>
                 </div>
                 <p className="text-muted-foreground">Premios Ganados</p>
               </div>
               <div>
                 <div className="flex items-center justify-center lg:justify-start space-x-2 mb-2">
                   <Users className="h-6 w-6 text-primary" />
-                  <span className="text-2xl font-bold text-foreground">50K+</span>
+                  <span className="text-2xl font-bold text-foreground">25K+</span>
                 </div>
                 <p className="text-muted-foreground">Ganadores Felices</p>
               </div>
@@ -155,14 +136,7 @@ export function Hero() {
               </div>
 
               <div className="mt-6 text-center">
-                <p className="text-sm text-slate-500 mb-3">Haz clic en cualquier rango para ver y comprar boletos</p>
-                <Button
-                  className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold"
-                  onClick={handleContactWhatsApp}
-                >
-                  <MessageCircle className="mr-2 h-4 w-4" />
-                  Contactar por WhatsApp
-                </Button>
+                <p className="text-sm text-slate-500">Haz clic en cualquier rango para ver y comprar boletos</p>
               </div>
             </div>
           </div>

@@ -3,8 +3,8 @@ import { Navbar } from "@/components/navbar"
 import { TicketPackages } from "@/components/sections/ticket-packages"
 
 export const metadata: Metadata = {
-  title: "Buy Tickets - RafflePro",
-  description: "Choose your ticket package and join the raffle",
+  title: "Comprar Boletos - RafflePro",
+  description: "Elige tu paquete de boletos y únete a la rifa",
 }
 
 export default function BuyTicketsPage() {
@@ -14,10 +14,11 @@ export default function BuyTicketsPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold text-slate-800 mb-4">
-            Choose Your <span className="text-amber-600">Ticket Package</span>
+            Elige Tu <span className="text-amber-600">Paquete de Boletos</span>
           </h1>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-            Select from our premium ticket packages or customize your own. More tickets mean better chances to win!
+            Selecciona entre nuestros paquetes premium de boletos o personaliza el tuyo. ¡Más boletos significan mejores
+            oportunidades de ganar!
           </p>
         </div>
         <TicketPackages />

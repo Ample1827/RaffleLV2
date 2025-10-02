@@ -8,41 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { CheckCircle, XCircle, Search, Ticket, AlertCircle, Clock } from "lucide-react"
-
-const mockTickets = [
-  {
-    id: "TKT-2024-001234",
-    status: "valid",
-    purchaseDate: "2024-01-15",
-    drawDate: "2024-01-20",
-    prize: "Sorteo Gran Premio",
-    value: "$80,000 MXN",
-  },
-  {
-    id: "TKT-2024-001235",
-    status: "pending",
-    purchaseDate: "2024-01-10",
-    drawDate: "2024-01-15",
-    prize: "Motocicleta Deportiva",
-    value: "$45,000 MXN",
-  },
-  {
-    id: "TKT-2024-001236",
-    status: "invalid",
-    purchaseDate: "2023-12-20",
-    drawDate: "2024-01-01",
-    prize: "Especial de Temporada",
-    value: "$25,000 MXN",
-  },
-  {
-    id: "TKT-2024-001237",
-    status: "owned",
-    purchaseDate: "2024-01-05",
-    drawDate: "2024-01-10",
-    prize: "Premio Especial",
-    value: "$50,000 MXN",
-  },
-]
+import { getPurchaseByReservationIdAction } from "@/app/actions/purchase-actions"
 
 export function ValidateTickets() {
   const [ticketId, setTicketId] = useState("")
@@ -54,12 +20,35 @@ export function ValidateTickets() {
 
     setIsValidating(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      const ticket = mockTickets.find((t) => t.id.toLowerCase() === ticketId.toLowerCase())
-      setValidationResult(ticket || { status: "invalid" })
+    try {
+      const result = await getPurchaseByReservationIdAction(ticketId.trim())
+
+      if (result.success && result.purchase) {
+        const purchase = result.purchase
+
+        const mappedResult = {
+          id: purchase.reservation_id || ticketId,
+          status: purchase.status === "approved" ? "valid" : purchase.status === "pending" ? "pending" : "invalid",
+          purchaseDate: new Date(purchase.created_at).toLocaleDateString("es-MX"),
+          drawDate: "2024-12-31",
+          prize: "Gran Sorteo 2024",
+          value: `$${purchase.total_amount.toLocaleString("es-MX")} MXN`,
+          buyerName: purchase.buyer_name,
+          buyerPhone: purchase.buyer_phone,
+          ticketCount: purchase.ticket_numbers?.length || 0,
+          ticketNumbers: purchase.ticket_numbers || [],
+        }
+
+        setValidationResult(mappedResult)
+      } else {
+        setValidationResult({ status: "invalid" })
+      }
+    } catch (error) {
+      console.error("[v0] Error validating ticket:", error)
+      setValidationResult({ status: "invalid" })
+    } finally {
       setIsValidating(false)
-    }, 1500)
+    }
   }
 
   const getStatusIcon = (status: string) => {
@@ -95,7 +84,7 @@ export function ValidateTickets() {
   const getStatusText = (status: string) => {
     switch (status) {
       case "valid":
-        return "Válido y Activo"
+        return "Válido y Aprobado"
       case "pending":
         return "Pendiente de Verificación"
       case "invalid":
@@ -127,7 +116,7 @@ export function ValidateTickets() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-4 gap-6 mb-12 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 mb-12 max-w-6xl mx-auto">
           <Card className="bg-white/80 backdrop-blur-sm border border-green-200 shadow-lg">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
@@ -138,10 +127,12 @@ export function ValidateTickets() {
             <CardContent>
               <div className="space-y-2">
                 <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                  <div className="font-mono text-sm text-green-800">TKT-2024-001234</div>
-                  <Badge className="bg-green-500/10 text-green-600 border-green-500/20 mt-1">Válido y Activo</Badge>
+                  <div className="font-mono text-sm text-green-800">TKT-XXXXXX-XXX</div>
+                  <Badge className="bg-green-500/10 text-green-600 border-green-500/20 mt-1">Válido y Aprobado</Badge>
                 </div>
-                <p className="text-sm text-slate-600">El boleto está verificado y es elegible para el sorteo.</p>
+                <p className="text-sm text-slate-600">
+                  El boleto está verificado, aprobado y es elegible para el sorteo.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -156,7 +147,7 @@ export function ValidateTickets() {
             <CardContent>
               <div className="space-y-2">
                 <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <div className="font-mono text-sm text-yellow-800">TKT-2024-001235</div>
+                  <div className="font-mono text-sm text-yellow-800">TKT-XXXXXX-XXX</div>
                   <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 mt-1">
                     Pendiente de Verificación
                   </Badge>
@@ -176,28 +167,10 @@ export function ValidateTickets() {
             <CardContent>
               <div className="space-y-2">
                 <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                  <div className="font-mono text-sm text-red-800">TKT-2024-001236</div>
+                  <div className="font-mono text-sm text-red-800">TKT-XXXXXX-XXX</div>
                   <Badge className="bg-red-500/10 text-red-600 border-red-500/20 mt-1">Boleto Inválido</Badge>
                 </div>
                 <p className="text-sm text-slate-600">El boleto no existe o no es válido en nuestro sistema.</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-sm border border-blue-200 shadow-lg">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Ticket className="w-5 h-5 text-blue-500" />
-                <CardTitle className="text-lg text-blue-700">Boleto Comprado</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="font-mono text-sm text-blue-800">TKT-2024-001237</div>
-                  <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 mt-1">Comprado y Tuyo</Badge>
-                </div>
-                <p className="text-sm text-slate-600">Este boleto ha sido comprado y te pertenece.</p>
               </div>
             </CardContent>
           </Card>
@@ -222,9 +195,14 @@ export function ValidateTickets() {
                 <div className="flex gap-2">
                   <Input
                     id="ticketId"
-                    placeholder="ej., TKT-2024-001234"
+                    placeholder="ej., TKT-054308-XFB"
                     value={ticketId}
                     onChange={(e) => setTicketId(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleValidation()
+                      }
+                    }}
                     className="flex-1 border-slate-300 focus:border-amber-500"
                   />
                   <Button
@@ -259,7 +237,7 @@ export function ValidateTickets() {
 
                     {validationResult.status !== "invalid" ? (
                       <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4 text-sm bg-white p-4 rounded-lg border border-slate-200">
+                        <div className="grid grid-cols-3 gap-4 text-sm bg-white p-4 rounded-lg border border-slate-200">
                           <div className="space-y-1">
                             <span className="text-slate-500 text-xs uppercase tracking-wide">ID del Boleto</span>
                             <div className="font-mono font-semibold text-slate-800 text-base">
@@ -271,19 +249,31 @@ export function ValidateTickets() {
                             <div className="font-medium text-slate-800">{validationResult.purchaseDate}</div>
                           </div>
                           <div className="space-y-1">
-                            <span className="text-slate-500 text-xs uppercase tracking-wide">Fecha del Sorteo</span>
-                            <div className="font-medium text-slate-800">{validationResult.drawDate}</div>
-                          </div>
-                          <div className="space-y-1">
-                            <span className="text-slate-500 text-xs uppercase tracking-wide">Categoría del Premio</span>
-                            <div className="font-medium text-slate-800">{validationResult.prize}</div>
+                            <span className="text-slate-500 text-xs uppercase tracking-wide">Cantidad de Boletos</span>
+                            <div className="font-medium text-slate-800">{validationResult.ticketCount} boletos</div>
                           </div>
                         </div>
+
+                        {validationResult.ticketNumbers && validationResult.ticketNumbers.length > 0 && (
+                          <div className="bg-white p-4 rounded-lg border border-slate-200">
+                            <h4 className="text-sm font-semibold text-slate-700 mb-3">Números de Boletos</h4>
+                            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                              {validationResult.ticketNumbers.map((ticketNum: number, index: number) => (
+                                <div
+                                  key={index}
+                                  className="bg-amber-50 border border-amber-200 rounded px-2 py-1.5 text-center"
+                                >
+                                  <span className="font-mono text-sm font-semibold text-amber-700">{ticketNum}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         <Separator />
 
                         <div className="flex items-center justify-between bg-amber-50 p-4 rounded-lg border border-amber-200">
-                          <span className="text-slate-700 font-medium">Valor del Premio</span>
+                          <span className="text-slate-700 font-medium">Valor Total</span>
                           <span className="text-2xl font-bold text-amber-600">{validationResult.value}</span>
                         </div>
 
@@ -292,8 +282,10 @@ export function ValidateTickets() {
                             <div className="flex items-center gap-3 text-green-700">
                               <CheckCircle className="w-6 h-6 flex-shrink-0" />
                               <div>
-                                <p className="font-semibold text-base">¡Boleto Válido!</p>
-                                <p className="text-sm text-green-600">Este boleto es elegible para el próximo sorteo</p>
+                                <p className="font-semibold text-base">¡Boleto Válido y Aprobado!</p>
+                                <p className="text-sm text-green-600">
+                                  Este boleto ha sido aprobado y es elegible para el próximo sorteo
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -306,20 +298,9 @@ export function ValidateTickets() {
                               <div>
                                 <p className="font-semibold text-base">Verificación Pendiente</p>
                                 <p className="text-sm text-yellow-600">
-                                  Este boleto está en proceso de verificación de pago
+                                  Este boleto está en proceso de verificación de pago. Una vez aprobado, será elegible
+                                  para el sorteo.
                                 </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {validationResult.status === "owned" && (
-                          <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-xl shadow-sm">
-                            <div className="flex items-center gap-3 text-blue-700">
-                              <Ticket className="w-6 h-6 flex-shrink-0" />
-                              <div>
-                                <p className="font-semibold text-base">¡Tu Boleto!</p>
-                                <p className="text-sm text-blue-600">Este boleto ha sido comprado y te pertenece</p>
                               </div>
                             </div>
                           </div>
@@ -332,7 +313,7 @@ export function ValidateTickets() {
                           <div>
                             <p className="font-semibold text-base">Boleto Inválido</p>
                             <p className="text-sm text-red-600">
-                              ID de boleto inválido. Por favor verifica tu boleto e intenta de nuevo
+                              ID de boleto inválido o no encontrado. Por favor verifica tu boleto e intenta de nuevo.
                             </p>
                           </div>
                         </div>
@@ -346,28 +327,42 @@ export function ValidateTickets() {
 
           <Card className="bg-white/80 backdrop-blur-sm border border-slate-200 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-lg text-slate-800">IDs de Boletos de Ejemplo para Pruebas</CardTitle>
+              <CardTitle className="text-lg text-slate-800">Cómo Validar Tu Boleto</CardTitle>
               <CardDescription className="text-slate-600">
-                Usa estos IDs de ejemplo para probar el sistema de validación
+                Ingresa el ID de reservación que recibiste al comprar tus boletos
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-2 text-sm">
-                <div className="flex justify-between items-center p-2 bg-slate-50/50 rounded border border-slate-200">
-                  <code className="font-mono text-slate-700">TKT-2024-001234</code>
-                  <Badge className="bg-green-500/10 text-green-600">Válido</Badge>
+              <div className="space-y-3 text-sm text-slate-600">
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-semibold text-xs flex-shrink-0 mt-0.5">
+                    1
+                  </div>
+                  <p>Busca el ID de reservación en el mensaje de WhatsApp que recibiste al comprar</p>
                 </div>
-                <div className="flex justify-between items-center p-2 bg-slate-50/50 rounded border border-slate-200">
-                  <code className="font-mono text-slate-700">TKT-2024-001235</code>
-                  <Badge className="bg-yellow-500/10 text-yellow-600">Pendiente</Badge>
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-semibold text-xs flex-shrink-0 mt-0.5">
+                    2
+                  </div>
+                  <p>
+                    El ID tiene el formato: <code className="font-mono bg-slate-100 px-1 rounded">TKT-XXXXXX-XXX</code>
+                  </p>
                 </div>
-                <div className="flex justify-between items-center p-2 bg-slate-50/50 rounded border border-slate-200">
-                  <code className="font-mono text-slate-700">TKT-2024-001236</code>
-                  <Badge className="bg-red-500/10 text-red-600">Inválido</Badge>
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-semibold text-xs flex-shrink-0 mt-0.5">
+                    3
+                  </div>
+                  <p>Ingresa el ID completo en el campo de arriba y presiona "Validar"</p>
                 </div>
-                <div className="flex justify-between items-center p-2 bg-slate-50/50 rounded border border-slate-200">
-                  <code className="font-mono text-slate-700">TKT-2024-001237</code>
-                  <Badge className="bg-blue-500/10 text-blue-600">Comprado</Badge>
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-semibold text-xs flex-shrink-0 mt-0.5">
+                    4
+                  </div>
+                  <p>
+                    Verás el estado de tu compra:{" "}
+                    <Badge className="bg-yellow-500/10 text-yellow-600 text-xs">Pendiente</Badge> o{" "}
+                    <Badge className="bg-green-500/10 text-green-600 text-xs">Aprobado</Badge>
+                  </p>
                 </div>
               </div>
             </CardContent>

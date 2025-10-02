@@ -8,6 +8,10 @@ export interface Purchase {
   quantity: number
   total_amount: number
   status: "pending" | "approved"
+  buyer_name?: string
+  buyer_phone?: string
+  buyer_state?: string
+  reservation_id?: string
   created_at: string
   updated_at: string
 }
@@ -131,15 +135,38 @@ export async function getAllTickets() {
   try {
     console.log("[v0] Fetching all tickets")
 
-    const { data, error } = await supabase.from("tickets").select("*").order("ticket_number", { ascending: true })
+    const allTickets = []
+    const batchSize = 1000
+    const totalTickets = 10000
+    const numBatches = Math.ceil(totalTickets / batchSize)
 
-    if (error) {
-      console.error("[v0] Error fetching tickets:", error)
-      throw error
+    console.log("[v0] Fetching", numBatches, "batches of tickets")
+
+    for (let i = 0; i < numBatches; i++) {
+      const batchStart = i * batchSize
+      const batchEnd = Math.min(batchStart + batchSize - 1, totalTickets - 1)
+
+      console.log("[v0] Fetching batch", i + 1, "of", numBatches, ":", batchStart, "-", batchEnd)
+
+      const { data, error } = await supabase
+        .from("tickets")
+        .select("*")
+        .gte("ticket_number", batchStart)
+        .lte("ticket_number", batchEnd)
+        .order("ticket_number", { ascending: true })
+
+      if (error) {
+        console.error("[v0] Error fetching batch:", error)
+        throw error
+      }
+
+      if (data) {
+        allTickets.push(...data)
+      }
     }
 
-    console.log("[v0] Fetched tickets:", data?.length || 0, "records")
-    return data
+    console.log("[v0] Fetched tickets:", allTickets.length, "records (across", numBatches, "batches)")
+    return allTickets
   } catch (error) {
     console.error("[v0] Unexpected error in getAllTickets:", error)
     throw error
@@ -152,20 +179,58 @@ export async function getTicketsByRange(startNumber: number, endNumber: number) 
   try {
     console.log("[v0] Fetching tickets in range:", startNumber, "-", endNumber)
 
-    const { data, error } = await supabase
-      .from("tickets")
-      .select("*")
-      .gte("ticket_number", startNumber)
-      .lte("ticket_number", endNumber)
-      .order("ticket_number", { ascending: true })
+    const rangeSize = endNumber - startNumber + 1
 
-    if (error) {
-      console.error("[v0] Error fetching tickets by range:", error)
-      throw error
+    if (rangeSize <= 1000) {
+      // Single batch fetch for ranges <= 1000
+      const { data, error } = await supabase
+        .from("tickets")
+        .select("*")
+        .gte("ticket_number", startNumber)
+        .lte("ticket_number", endNumber)
+        .order("ticket_number", { ascending: true })
+
+      if (error) {
+        console.error("[v0] Error fetching tickets by range:", error)
+        throw error
+      }
+
+      console.log("[v0] Fetched tickets in range:", data?.length || 0, "records")
+      return data
+    } else {
+      // Multi-batch fetch for ranges > 1000
+      const allTickets = []
+      const batchSize = 1000
+      const numBatches = Math.ceil(rangeSize / batchSize)
+
+      console.log("[v0] Fetching", numBatches, "batches for range", startNumber, "-", endNumber)
+
+      for (let i = 0; i < numBatches; i++) {
+        const batchStart = startNumber + i * batchSize
+        const batchEnd = Math.min(batchStart + batchSize - 1, endNumber)
+
+        console.log("[v0] Fetching batch", i + 1, "of", numBatches, ":", batchStart, "-", batchEnd)
+
+        const { data, error } = await supabase
+          .from("tickets")
+          .select("*")
+          .gte("ticket_number", batchStart)
+          .lte("ticket_number", batchEnd)
+          .order("ticket_number", { ascending: true })
+
+        if (error) {
+          console.error("[v0] Error fetching batch:", error)
+          throw error
+        }
+
+        if (data) {
+          allTickets.push(...data)
+        }
+      }
+
+      console.log("[v0] Fetched tickets in range:", allTickets.length, "records (across", numBatches, "batches)")
+      return allTickets
     }
-
-    console.log("[v0] Fetched tickets in range:", data?.length || 0, "records")
-    return data
   } catch (error) {
     console.error("[v0] Unexpected error in getTicketsByRange:", error)
     throw error
@@ -175,6 +240,9 @@ export async function getTicketsByRange(startNumber: number, endNumber: number) 
 export async function createPurchaseWithoutAuth(purchaseData: {
   ticket_numbers: number[]
   total_amount: number
+  buyer_name?: string
+  buyer_phone?: string
+  buyer_state?: string
 }) {
   const supabase = createClient()
 
@@ -183,9 +251,14 @@ export async function createPurchaseWithoutAuth(purchaseData: {
     console.log("[v0] Purchase data:", JSON.stringify(purchaseData, null, 2))
     console.log("[v0] Ticket numbers count:", purchaseData.ticket_numbers.length)
     console.log("[v0] Total amount:", purchaseData.total_amount)
+    console.log("[v0] Buyer name:", purchaseData.buyer_name)
+    console.log("[v0] Buyer phone:", purchaseData.buyer_phone)
+    console.log("[v0] Buyer state:", purchaseData.buyer_state)
 
-    const ticketId = `TKT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999999) + 1).padStart(6, "0")}`
-    console.log("[v0] Generated ticket ID:", ticketId)
+    const timestamp = Date.now().toString().slice(-6)
+    const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase()
+    const reservationId = `TKT-${timestamp}-${randomSuffix}`
+    console.log("[v0] Generated reservation ID:", reservationId)
 
     console.log("[v0] Checking ticket availability...")
     const { data: existingTickets, error: checkError } = await supabase
@@ -229,6 +302,10 @@ export async function createPurchaseWithoutAuth(purchaseData: {
         ticket_numbers: purchaseData.ticket_numbers,
         total_amount: purchaseData.total_amount,
         status: "pending",
+        buyer_name: purchaseData.buyer_name,
+        buyer_phone: purchaseData.buyer_phone,
+        buyer_state: purchaseData.buyer_state,
+        reservation_id: reservationId,
       })
       .select()
       .single()
@@ -247,7 +324,7 @@ export async function createPurchaseWithoutAuth(purchaseData: {
 
     console.log("[v0] Purchase created successfully:", data)
     console.log("[v0] Purchase ID:", data.id)
-    return { ...data, ticketId }
+    return { ...data, ticketId: reservationId }
   } catch (error) {
     console.error("[v0] Unexpected error in createPurchaseWithoutAuth:", error)
     if (error instanceof Error) {
@@ -416,6 +493,27 @@ export async function getPurchaseDetails(purchaseId: string) {
     return data
   } catch (error) {
     console.error("[v0] Unexpected error in getPurchaseDetails:", error)
+    throw error
+  }
+}
+
+export async function getPurchaseByTicketId(ticketId: string) {
+  const supabase = createClient()
+
+  try {
+    console.log("[v0] Looking up purchase by ticket ID:", ticketId)
+
+    const { data, error } = await supabase.from("purchases").select("*").order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("[v0] Error fetching purchases:", error)
+      throw error
+    }
+
+    console.log("[v0] Fetched purchases for ticket ID lookup")
+    return data
+  } catch (error) {
+    console.error("[v0] Unexpected error in getPurchaseByTicketId:", error)
     throw error
   }
 }

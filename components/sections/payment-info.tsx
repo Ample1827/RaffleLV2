@@ -14,6 +14,51 @@ export function PaymentInfo() {
     setTimeout(() => setCopiedField(null), 2000)
   }
 
+  const handleContactSupport = () => {
+    const message = `Hola! 👋 Necesito ayuda con información de pagos.
+
+📋 *MÉTODOS DE PAGO DISPONIBLES:*
+
+💳 *1. TRANSFERENCIA BANCARIA*
+Puedes realizar transferencias a nuestras cuentas bancarias:
+• BBVA México
+• Santander México  
+• Banorte
+
+🏪 *2. DEPÓSITO EN EFECTIVO*
+
+*Tiendas de conveniencia:*
+• Oxxo
+• 7-Eleven
+• Kiosko
+• Systienda
+
+*Supermercados:*
+• Soriana
+• Chedraui
+
+*Farmacias:*
+• Farmacias del Ahorro
+
+📝 *PASOS PARA REALIZAR TU PAGO:*
+
+1️⃣ Elige tu método de pago preferido
+2️⃣ Realiza el pago por el monto exacto de tu compra
+3️⃣ Guarda tu comprobante de pago
+4️⃣ Envíanos el comprobante por WhatsApp junto con tu ID de reserva
+5️⃣ Espera la confirmación (generalmente en menos de 24 horas)
+
+⚠️ *IMPORTANTE:*
+• Conserva siempre tu comprobante de pago
+• Incluye tu ID de reserva al enviar el comprobante
+• Los pagos se verifican en orden de llegada
+
+¿En qué puedo ayudarte específicamente?`
+
+    const whatsappUrl = `https://wa.me/5216642709153?text=${encodeURIComponent(message)}`
+    window.open(whatsappUrl, "_blank")
+  }
+
   const bankAccounts = [
     {
       bank: "BBVA México",
@@ -68,7 +113,7 @@ export function PaymentInfo() {
                   La línea a la que fuiste dirigido anteriormente:
                 </h3>
                 <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
-                  <span className="text-2xl font-bold text-green-600">+52 ### ### ####</span>
+                  <span className="text-2xl font-bold text-green-600">### ### ####</span>
                   <Button
                     onClick={() => copyToClipboard("+52 ### ### ####", "whatsapp")}
                     variant="outline"
@@ -161,7 +206,10 @@ export function PaymentInfo() {
               <p className="text-gray-700 text-lg">
                 Si tienes alguna duda sobre el proceso de pago, no dudes en contactarnos.
               </p>
-              <Button className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-300">
+              <Button
+                onClick={handleContactSupport}
+                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-semibold px-8 py-3 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-300"
+              >
                 Contactar Soporte
               </Button>
             </div>

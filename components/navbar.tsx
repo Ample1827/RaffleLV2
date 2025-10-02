@@ -17,13 +17,13 @@ export function Navbar() {
 
     // If we're on the home page, scroll to contact section
     if (pathname === "/") {
-      const contactSection = document.getElementById("contacto")
+      const contactSection = document.getElementById("contact")
       if (contactSection) {
         contactSection.scrollIntoView({ behavior: "smooth" })
       }
     } else {
       // If we're on another page, navigate to home page with contact hash
-      router.push("/#contacto")
+      router.push("/#contact")
     }
 
     // Close mobile menu if open

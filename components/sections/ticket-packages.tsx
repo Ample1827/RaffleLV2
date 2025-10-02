@@ -12,6 +12,7 @@ import { getTicketsByRange } from "@/lib/database"
 import { openWhatsApp } from "@/lib/whatsapp"
 import { createPurchaseAction } from "@/app/actions/purchase-actions"
 import { useAllTickets, useTicketsByRange } from "@/lib/hooks/use-tickets"
+import { mutate as globalMutate } from "swr"
 
 const ticketPackages = [
   {
@@ -99,7 +100,13 @@ export function TicketPackages() {
     promoCode: "",
   })
 
-  const { sectionCounts, isLoading: isLoadingAllTickets, mutate: refreshAllTickets } = useAllTickets()
+  const {
+    sectionCounts,
+    totalAvailable,
+    isLoading: isLoadingAllTickets,
+    mutate: refreshAllTickets,
+    tickets,
+  } = useAllTickets()
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
@@ -134,11 +141,24 @@ export function TicketPackages() {
     }
   }
 
+  const allAvailableTickets = tickets
+    .filter((ticket) => ticket.is_available)
+    .map((ticket) => ticket.ticket_number.toString().padStart(4, "0"))
+
   const handlePackageSelect = (packageId: number) => {
     setSelectedPackage(packageId)
     const pkg = ticketPackages.find((p) => p.id === packageId)
     if (pkg) {
-      const assignedTickets = generateConsecutiveTickets(pkg.tickets)
+      const availableForSelection = allAvailableTickets.filter((ticket) => !selectedTickets.includes(ticket))
+
+      if (availableForSelection.length < pkg.tickets) {
+        alert(
+          `Solo hay ${availableForSelection.length} boletos disponibles. No se pueden asignar ${pkg.tickets} boletos.`,
+        )
+        return
+      }
+
+      const assignedTickets = selectRandomAvailableTickets(pkg.tickets, availableForSelection)
       setAssignedPackageTickets(assignedTickets)
       setSelectedTickets(assignedTickets)
     }
@@ -168,45 +188,85 @@ export function TicketPackages() {
   }
 
   const handlePayNow = async () => {
-    // Validate form
+    console.log("[v0] ========== CLIENT: PURCHASE FLOW START ==========")
+    console.log("[v0] Validating form fields...")
+
     if (!purchaseForm.firstName || !purchaseForm.lastName || !purchaseForm.phoneNumber || !purchaseForm.state) {
+      console.error("[v0] CLIENT ERROR: Missing required form fields")
+      console.error("[v0] Form state:", {
+        firstName: !!purchaseForm.firstName,
+        lastName: !!purchaseForm.lastName,
+        phoneNumber: !!purchaseForm.phoneNumber,
+        state: !!purchaseForm.state,
+      })
       alert("Por favor completa todos los campos requeridos")
       return
     }
+
+    console.log("[v0] ✓ Form validation passed")
 
     try {
       const ticketNumbers = selectedTickets.map((t) => Number.parseInt(t))
       const totalAmount = selectedPackage ? getSelectedPackageInfo()?.price || 0 : selectedTickets.length * 20
 
-      console.log("[v0] Starting purchase process...")
-      console.log("[v0] Ticket numbers:", ticketNumbers)
-      console.log("[v0] Total amount:", totalAmount)
+      console.log("[v0] Purchase details:")
+      console.log("[v0] - Selected tickets count:", selectedTickets.length)
+      console.log("[v0] - First 10 tickets:", selectedTickets.slice(0, 10))
+      console.log("[v0] - Ticket numbers (parsed):", ticketNumbers.slice(0, 10), "... (showing first 10)")
+      console.log("[v0] - Total amount:", totalAmount)
+      console.log("[v0] - Buyer name:", `${purchaseForm.firstName} ${purchaseForm.lastName}`)
+      console.log("[v0] - Buyer phone:", purchaseForm.phoneNumber)
+      console.log("[v0] - Buyer state:", purchaseForm.state)
+      console.log("[v0] - Selected package:", selectedPackage)
+
+      console.log("[v0] Calling createPurchaseAction...")
 
       const result = await createPurchaseAction({
         ticketNumbers,
         totalAmount,
+        buyerName: `${purchaseForm.firstName} ${purchaseForm.lastName}`,
+        buyerPhone: purchaseForm.phoneNumber,
+        buyerState: purchaseForm.state,
       })
 
+      console.log("[v0] Received response from createPurchaseAction:")
+      console.log("[v0] - Success:", result.success)
+      console.log("[v0] - Result:", JSON.stringify(result, null, 2))
+
       if (!result.success) {
+        console.error("[v0] CLIENT ERROR: Purchase action failed")
+        console.error("[v0] Error message:", result.error)
         throw new Error(result.error || "Error desconocido")
       }
 
       const purchase = result.purchase
-      console.log("[v0] Purchase created successfully:", purchase)
+      console.log("[v0] ✓ Purchase created successfully!")
+      console.log("[v0] Purchase ID:", purchase.id)
+      console.log("[v0] Purchase status:", purchase.status)
 
-      const timestamp = Date.now().toString().slice(-6) // Last 6 digits of timestamp
-      const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase() // 3 random chars
-      const ticketId = `TKT-${timestamp}-${randomSuffix}`
+      const ticketId = purchase.reservation_id
+      console.log("[v0] Using server reservation ID:", ticketId)
 
-      // Store the mapping in the purchase for verification
-      console.log("[v0] Generated ticket ID:", ticketId, "for purchase:", purchase.id)
+      let ticketsList = ""
+      if (selectedTickets.length <= 25) {
+        ticketsList = selectedTickets.join(", ")
+      } else {
+        ticketsList = `${selectedTickets.slice(0, 25).join(", ")}
 
-      const message = `Hola, soy ${purchaseForm.firstName} ${purchaseForm.lastName}
+📝 *Nota:* Tienes más de 25 boletos. Para ver la lista completa de tus boletos, usa la opción "Verificar Boletos" en nuestra página web con tu ID de Reserva.`
+      }
+
+      const websiteUrl = window.location.origin
+      const verifyTicketsUrl = `${websiteUrl}/verify-tickets`
+
+      const message = `🌐 *Sitio Web:* ${websiteUrl}
+
+Hola, soy ${purchaseForm.firstName} ${purchaseForm.lastName}
 
 📋 *ID de Reserva:* ${ticketId}
 
 🎫 *Boletos Reservados:* ${selectedTickets.length}
-${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y ${selectedTickets.length - 20} más` : ""}
+${ticketsList}
 
 💰 *Total a Pagar:* $${totalAmount} MXN
 
@@ -221,15 +281,20 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
 
 ⚠️ *Importante:* Tus boletos están reservados por 24 horas. Si no recibes el pago en ese tiempo, la reserva será cancelada.
 
+🔍 *Verificar Boletos:* ${verifyTicketsUrl}
+Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Reserva.
+
 ¡Gracias por tu compra! 🎉`
 
-      openWhatsApp("+5212216250235", message)
+      console.log("[v0] Opening WhatsApp with message...")
+      openWhatsApp("+5216642709153", message)
 
       setShowPurchaseDialog(false)
       alert(
-        `¡Reserva creada exitosamente! 🎉\n\nID: ${ticketId}\n\nTus boletos han sido reservados.\nTe hemos redirigido a WhatsApp para completar tu pago.`,
+        `¡Reserva creada exitosamente! 🎉\n\nID: ${ticketId}\n\nTus boletos han sido reservados.\nTe hemos redirigido a WhatsApp para completar tu pago.\n\n💡 Guarda tu ID de Reserva para verificar tus boletos más tarde.`,
       )
 
+      console.log("[v0] Resetting form and selections...")
       setPurchaseForm({
         firstName: "",
         lastName: "",
@@ -241,21 +306,34 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
       setSelectedPackage(null)
       setAssignedPackageTickets([])
 
+      console.log("[v0] Invalidating all ticket caches...")
+
+      // Refresh the main tickets list
       refreshAllTickets()
-      if (openSectionDialog !== null) {
-        fetchTicketsForSection(openSectionDialog)
-      }
+
+      // Invalidate all ticket-range caches (for all section dialogs)
+      await globalMutate((key) => Array.isArray(key) && key[0] === "tickets-range", undefined, { revalidate: true })
+
+      console.log("[v0] All caches invalidated successfully")
+      console.log("[v0] Reloading page...")
+      console.log("[v0] ========== CLIENT: PURCHASE FLOW SUCCESS ==========")
 
       window.location.reload()
     } catch (error) {
+      console.error("[v0] ========== CLIENT: PURCHASE FLOW FAILED ==========")
       console.error("[v0] Error creating purchase:", error)
 
       let errorMessage = "Error al crear la reserva. Por favor intenta de nuevo."
 
       if (error instanceof Error) {
-        console.error("[v0] Error details:", error.message)
+        console.error("[v0] Error type:", error.name)
+        console.error("[v0] Error message:", error.message)
+        console.error("[v0] Error stack:", error.stack)
         errorMessage = `Error: ${error.message}`
       }
+
+      console.error("[v0] Showing error to user:", errorMessage)
+      console.error("[v0] ========================================")
 
       alert(errorMessage)
     }
@@ -263,22 +341,25 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
 
   const generateLuckyNumbers = () => {
     const amount = Number.parseInt(luckyNumberAmount) || 0
-    if (amount <= 0 || amount > 10000) return
+    if (amount <= 0 || amount > 1000) return
+
+    const availableForSelection = allAvailableTickets.filter((ticket) => !selectedTickets.includes(ticket))
+
+    if (availableForSelection.length < amount) {
+      alert(`Solo hay ${availableForSelection.length} boletos disponibles. No se pueden generar ${amount} boletos.`)
+      return
+    }
 
     setIsGenerating(true)
 
     setTimeout(() => {
-      const numbers = new Set<string>()
-      while (numbers.size < amount) {
-        const randomNum = Math.floor(Math.random() * 10000)
-        numbers.add(randomNum.toString().padStart(4, "0"))
-      }
+      const numbers = selectRandomAvailableTickets(amount, availableForSelection)
 
       setSelectedPackage(null)
       setAssignedPackageTickets([])
 
-      setGeneratedNumbers(Array.from(numbers))
-      setSelectedTickets(Array.from(numbers))
+      setGeneratedNumbers(numbers)
+      setSelectedTickets(numbers)
       setIsGenerating(false)
     }, 3000)
   }
@@ -288,9 +369,12 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
       alert("Este boleto ya no está disponible")
       return
     }
-    setSelectedTickets((prev) =>
-      prev.includes(ticketNumber) ? prev.filter((t) => t !== ticketNumber) : [...prev, ticketNumber],
-    )
+
+    if (selectedTickets.includes(ticketNumber)) {
+      setSelectedTickets((prev) => prev.filter((t) => t !== ticketNumber))
+    } else {
+      setSelectedTickets((prev) => [...prev, ticketNumber])
+    }
   }
 
   const handlePurchaseFromTable = (sectionTickets: string[]) => {
@@ -309,13 +393,10 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
     setShowPurchaseDialog(true)
   }
 
-  const generateConsecutiveTickets = (count: number): string[] => {
-    const startNumber = Math.floor(Math.random() * (10000 - count))
-    const tickets = []
-    for (let i = 0; i < count; i++) {
-      tickets.push((startNumber + i).toString().padStart(4, "0"))
-    }
-    return tickets
+  const selectRandomAvailableTickets = (count: number, availablePool: string[]): string[] => {
+    const shuffled = [...availablePool].sort(() => Math.random() - 0.5)
+    const selected = shuffled.slice(0, count)
+    return selected
   }
 
   return (
@@ -391,14 +472,18 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-3xl font-bold text-amber-600">${pkg.price}</span>
-                    <div className="text-right">
-                      <div className="text-sm text-slate-400 line-through">${pkg.originalPrice}</div>
-                      <div className="text-sm text-emerald-600">Ahorra ${savings}</div>
-                    </div>
+                    {pkg.id >= 2 && (
+                      <div className="text-right">
+                        <div className="text-sm text-slate-400 line-through">${pkg.originalPrice}</div>
+                        <div className="text-sm text-emerald-600">Ahorra ${savings}</div>
+                      </div>
+                    )}
                   </div>
-                  <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200">
-                    {Math.round((savings / pkg.originalPrice) * 100)}% DESC
-                  </Badge>
+                  {pkg.id >= 2 && (
+                    <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                      {Math.round((savings / pkg.originalPrice) * 100)}% DESC
+                    </Badge>
+                  )}
                   <p className="text-sm text-slate-500">${(pkg.price / pkg.tickets).toFixed(2)} por boleto</p>
 
                   {selectedPackage === pkg.id && assignedPackageTickets.length > 0 && (
@@ -436,8 +521,13 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
                       handlePackageSelect(pkg.id)
                     }
                   }}
+                  disabled={isLoadingAllTickets}
                 >
-                  {selectedPackage === pkg.id ? "Comprar Ahora" : "Seleccionar Paquete"}
+                  {isLoadingAllTickets
+                    ? "Cargando..."
+                    : selectedPackage === pkg.id
+                      ? "Comprar Ahora"
+                      : "Seleccionar Paquete"}
                 </Button>
               </CardFooter>
             </Card>
@@ -456,8 +546,10 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
                 backgroundSize: "400% 400%",
               }}
               data-lucky-numbers-trigger
+              disabled={isLoadingAllTickets}
             >
-              <Shuffle className="h-8 w-8 mr-4" />💰 MÁQUINA DE LA SUERTE 💰
+              <Shuffle className="h-8 w-8 mr-4" />
+              {isLoadingAllTickets ? "CARGANDO..." : "💰 MÁQUINA DE LA SUERTE 💰"}
               <Sparkles className="h-8 w-8 ml-4" />
             </Button>
           </DialogTrigger>
@@ -478,12 +570,16 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
                   id="lucky-amount"
                   type="number"
                   min="1"
-                  max="10000"
+                  // Use totalAvailable from SWR hook
+                  max={Math.min(1000, totalAvailable)}
                   value={luckyNumberAmount}
                   onChange={(e) => setLuckyNumberAmount(e.target.value)}
-                  placeholder="Ingresa el número de boletos"
+                  placeholder="Máximo 1,000 por intento"
                   className="mt-2 bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-400 text-lg p-4"
                 />
+                <p className="text-sm text-slate-500 mt-1">
+                  Máximo 1,000 boletos por intento ({totalAvailable} disponibles)
+                </p>
               </div>
 
               {isGenerating && (
@@ -527,7 +623,7 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
                 <Button
                   onClick={generateLuckyNumbers}
                   className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-4 text-lg"
-                  disabled={!luckyNumberAmount || Number.parseInt(luckyNumberAmount) <= 0}
+                  disabled={!luckyNumberAmount || Number.parseInt(luckyNumberAmount) <= 0 || isLoadingAllTickets}
                 >
                   <Shuffle className="h-6 w-6 mr-2" />
                   ¡Generar Números de la Suerte! 🎲
@@ -562,7 +658,8 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
             const endNum = startNum + 999
             const sectionTickets = ticketData[i] || []
             const sectionInfo = sectionCounts.find((s) => s.section === i)
-            const availableTickets = sectionInfo?.available || 1000
+            const availableTickets = sectionInfo?.available ?? 0
+            const isSoldOut = availableTickets === 0
 
             return (
               <Dialog
@@ -570,19 +667,30 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
                 open={openSectionDialog === i}
                 onOpenChange={(open) => {
                   if (!open) setOpenSectionDialog(null)
-                  else setOpenSectionDialog(i)
+                  else if (!isSoldOut) setOpenSectionDialog(i)
                 }}
               >
                 <DialogTrigger asChild>
                   <Card
-                    className="bg-slate-50 border-slate-200 hover:border-amber-400 transition-all duration-300 cursor-pointer hover:scale-105 shadow-md hover:shadow-lg"
+                    className={`bg-slate-50 border-slate-200 transition-all duration-300 shadow-md ${
+                      isSoldOut
+                        ? "opacity-60 cursor-not-allowed border-red-300 bg-red-50"
+                        : "hover:border-amber-400 cursor-pointer hover:scale-105 hover:shadow-lg"
+                    }`}
                     data-section={i}
-                    onClick={() => setOpenSectionDialog(i)}
+                    onClick={() => {
+                      if (!isSoldOut) setOpenSectionDialog(i)
+                    }}
                   >
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg text-slate-700 text-center">
                         {startNum.toString().padStart(4, "0")} - {endNum.toString().padStart(4, "0")}
                       </CardTitle>
+                      {isSoldOut && (
+                        <Badge className="absolute top-2 right-2 bg-red-500 text-white font-bold text-xs">
+                          AGOTADO
+                        </Badge>
+                      )}
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="text-center">
@@ -593,10 +701,14 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
                             availableTickets
                           )}
                         </div>
-                        <div className="text-sm text-slate-500">Disponibles</div>
+                        <div className={`text-sm ${isSoldOut ? "text-red-600 font-semibold" : "text-slate-500"}`}>
+                          {isSoldOut ? "Sin Disponibilidad" : "Disponibles"}
+                        </div>
                         <div className="w-full bg-slate-200 rounded-full h-2 mt-2">
                           <div
-                            className="bg-amber-500 h-2 rounded-full transition-all duration-300"
+                            className={`h-2 rounded-full transition-all duration-300 ${
+                              isSoldOut ? "bg-red-500" : "bg-amber-500"
+                            }`}
                             style={{ width: `${(availableTickets / 1000) * 100}%` }}
                           ></div>
                         </div>
@@ -711,7 +823,7 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
                   value={purchaseForm.phoneNumber}
                   onChange={(e) => handleFormChange("phoneNumber", e.target.value)}
                   className="bg-slate-50 border-slate-200"
-                  placeholder="+52 123 456 7890"
+                  placeholder="123 456 7890"
                 />
               </div>
               <div>
@@ -832,7 +944,6 @@ function SectionDialogContent({
       }))
     }
 
-    // Fallback to generating all tickets if no data
     const ticketList = []
     for (let i = 0; i < 1000; i++) {
       const ticketNumber = startNum + i
