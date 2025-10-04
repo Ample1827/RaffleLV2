@@ -786,20 +786,57 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
       </div>
 
       {selectedTickets.length > 0 && !selectedPackage && (
-        <div className="text-center space-y-4">
-          <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
-            <h4 className="text-amber-700 font-semibold mb-2">Boletos Seleccionados: {selectedTickets.length}</h4>
-            <p className="text-slate-700">Total: ${selectedTickets.length * 20}</p>
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-amber-300 shadow-2xl p-3 sm:p-4 md:relative md:border-0 md:shadow-none md:text-center md:space-y-4 md:mt-8">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4 md:block">
+            {/* Summary info */}
+            <div className="flex items-center gap-3 sm:gap-4 md:bg-amber-50 md:border md:border-amber-200 md:p-4 md:rounded-lg md:mb-4 md:block">
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5 text-amber-600 md:hidden" />
+                <div className="text-left md:text-center">
+                  <h4 className="text-amber-700 font-semibold text-sm sm:text-base md:mb-2">
+                    Boletos: {selectedTickets.length}
+                  </h4>
+                  <p className="text-slate-700 text-xs sm:text-sm md:text-base">
+                    Total: ${selectedTickets.length * 20}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Button */}
+            <Button
+              size="lg"
+              className="
+                bg-gradient-to-r from-amber-500 to-amber-600 
+                hover:from-amber-600 hover:to-amber-700 
+                active:from-amber-700 active:to-amber-800
+                text-white font-bold 
+                shadow-lg
+                transition-all duration-100
+                active:scale-[0.98]
+                touch-manipulation
+                h-12 sm:h-13 md:h-auto
+                text-sm sm:text-base md:text-lg
+                px-4 sm:px-8 md:px-12
+                py-3 md:py-4
+                flex-shrink-0
+                whitespace-nowrap
+              "
+              onClick={() => setShowPurchaseDialog(true)}
+              style={{
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "transparent",
+              }}
+            >
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">Guardar y Comprar Boletos</span>
+              <span className="sm:hidden">Comprar ({selectedTickets.length})</span>
+            </Button>
           </div>
-          <Button
-            size="lg"
-            className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold px-12 py-4 text-lg shadow-lg"
-            onClick={() => setShowPurchaseDialog(true)}
-          >
-            Guardar y Comprar Boletos Seleccionados
-          </Button>
         </div>
       )}
+
+      {selectedTickets.length > 0 && !selectedPackage && <div className="h-24 md:hidden" aria-hidden="true"></div>}
 
       <Dialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog}>
         <DialogContent className="max-w-2xl bg-white border-slate-200">
