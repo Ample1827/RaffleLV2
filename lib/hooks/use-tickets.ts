@@ -16,10 +16,10 @@ export function useTicketsByRange(startNum: number, endNum: number, enabled = tr
     enabled ? ["tickets-range", startNum, endNum] : null,
     ticketRangeFetcher,
     {
-      refreshInterval: 2000,
+      refreshInterval: 5000,
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
-      dedupingInterval: 1000,
+      dedupingInterval: 3000,
     },
   )
 
@@ -35,10 +35,10 @@ export function useTicketsByRange(startNum: number, endNum: number, enabled = tr
 // Hook to fetch all tickets with real-time updates
 export function useAllTickets() {
   const { data, error, isLoading, mutate } = useSWR("all-tickets", allTicketsFetcher, {
-    refreshInterval: 3000,
+    refreshInterval: 10000,
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
-    dedupingInterval: 1000,
+    dedupingInterval: 5000,
   })
 
   // Calculate available count for each section

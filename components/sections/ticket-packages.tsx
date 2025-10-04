@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, memo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,6 +13,50 @@ import { openWhatsApp } from "@/lib/whatsapp"
 import { createPurchaseAction } from "@/app/actions/purchase-actions"
 import { useAllTickets, useTicketsByRange } from "@/lib/hooks/use-tickets"
 import { mutate as globalMutate } from "swr"
+
+const TicketButton = memo(
+  ({
+    ticket,
+    isSelected,
+    onToggle,
+  }: {
+    ticket: { number: string; available: boolean }
+    isSelected: boolean
+    onToggle: (ticketNumber: string, isAvailable: boolean) => void
+  }) => {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        className={`
+          h-11 sm:h-10
+          min-h-[44px] sm:min-h-[40px]
+          text-xs sm:text-xs 
+          font-semibold
+          transition-all duration-50
+          touch-manipulation
+          ${
+            !ticket.available
+              ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed opacity-50"
+              : isSelected
+                ? "bg-amber-500 text-white border-amber-500 shadow-md"
+                : "border-slate-300 text-slate-700 bg-white hover:bg-amber-100 hover:border-amber-400 active:bg-amber-500 active:text-white active:border-amber-500 active:shadow-lg active:scale-95"
+          }
+        `}
+        onClick={() => onToggle(ticket.number, ticket.available)}
+        disabled={!ticket.available}
+        style={{
+          touchAction: "manipulation",
+          WebkitTapHighlightColor: "transparent",
+        }}
+      >
+        {ticket.number}
+      </Button>
+    )
+  },
+)
+
+TicketButton.displayName = "TicketButton"
 
 const ticketPackages = [
   {
@@ -988,61 +1032,40 @@ function SectionDialogContent({
         </div>
       ) : (
         <>
-          <div className="overflow-y-auto max-h-[60vh] pb-4 sm:pb-0">
+          <div className="overflow-y-auto max-h-[50vh] sm:max-h-[60vh] pb-2">
             <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-1.5 sm:gap-2 p-2 sm:p-4">
               {ticketNumbers.map((ticket) => (
-                <Button
+                <TicketButton
                   key={ticket.number}
-                  variant="outline"
-                  size="sm"
-                  className={`
-                    h-11 sm:h-10
-                    min-h-[44px] sm:min-h-[40px]
-                    text-xs sm:text-xs 
-                    font-semibold
-                    transition-all duration-100
-                    touch-manipulation
-                    ${
-                      !ticket.available
-                        ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed opacity-50"
-                        : selectedTickets.includes(ticket.number)
-                          ? "bg-amber-500 text-white border-amber-500 shadow-md"
-                          : "border-slate-300 text-slate-700 bg-white hover:bg-amber-100 hover:border-amber-400 active:bg-amber-500 active:text-white active:border-amber-500 active:shadow-lg"
-                    }
-                  `}
-                  onClick={() => toggleTicketSelection(ticket.number, ticket.available)}
-                  disabled={!ticket.available}
-                  style={{
-                    touchAction: "manipulation",
-                    WebkitTapHighlightColor: "transparent",
-                  }}
-                >
-                  {ticket.number}
-                </Button>
+                  ticket={ticket}
+                  isSelected={selectedTickets.includes(ticket.number)}
+                  onToggle={toggleTicketSelection}
+                />
               ))}
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 pt-4 border-t border-slate-200">
-            {/* Legend */}
-            <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm justify-center sm:justify-start">
-              <div className="flex items-center gap-1 sm:gap-2">
-                <div className="w-3 h-3 border border-slate-300 bg-white rounded"></div>
+          <div className="flex flex-col gap-2 pt-3 border-t border-slate-200 bg-white">
+            {/* Legend - more compact on mobile */}
+            <div className="flex flex-wrap gap-2 sm:gap-3 text-xs justify-center px-2">
+              <div className="flex items-center gap-1">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 border border-slate-300 bg-white rounded"></div>
                 <span className="text-slate-600">Disponible</span>
               </div>
-              <div className="flex items-center gap-1 sm:gap-2">
-                <div className="w-3 h-3 bg-amber-500 rounded"></div>
+              <div className="flex items-center gap-1">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-amber-500 rounded"></div>
                 <span className="text-slate-600">Seleccionado</span>
               </div>
-              <div className="flex items-center gap-1 sm:gap-2">
-                <div className="w-3 h-3 bg-gray-400 rounded"></div>
+              <div className="flex items-center gap-1">
+                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gray-400 rounded"></div>
                 <span className="text-slate-600">Vendido</span>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-              <p className="text-amber-600 font-semibold text-sm sm:text-base text-center sm:text-left">
-                {availableCount} boletos disponibles
+            {/* Available count and button */}
+            <div className="flex flex-col gap-2 px-2 pb-2">
+              <p className="text-amber-600 font-semibold text-xs sm:text-sm text-center">
+                {availableCount} disponibles
               </p>
               {selectedInSection.length > 0 && (
                 <Button
@@ -1050,22 +1073,23 @@ function SectionDialogContent({
                   className="
                     bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700
                     text-white font-bold
-                    w-full sm:w-auto
-                    h-12 sm:h-10
-                    min-h-[48px] sm:min-h-[40px]
-                    text-base sm:text-sm
+                    w-full
+                    h-12 sm:h-11
+                    min-h-[48px] sm:min-h-[44px]
+                    text-sm sm:text-base
                     shadow-lg
                     transition-all duration-100
-                    active:scale-95
+                    active:scale-[0.98]
                     touch-manipulation
+                    px-3
                   "
                   style={{
                     touchAction: "manipulation",
                     WebkitTapHighlightColor: "transparent",
                   }}
                 >
-                  <ShoppingCart className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
-                  Comprar Seleccionados ({selectedInSection.length})
+                  <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 flex-shrink-0" />
+                  <span className="truncate">Comprar ({selectedInSection.length})</span>
                 </Button>
               )}
             </div>
