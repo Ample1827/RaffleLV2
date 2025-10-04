@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   },
   generator: "ample1827",
   icons: {
-    icon: "/icon.svg",
+    icon: "/icon.png",
   },
 }
 
