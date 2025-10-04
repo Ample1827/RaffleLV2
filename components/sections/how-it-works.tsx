@@ -32,29 +32,29 @@ export function HowItWorks() {
   ]
 
   return (
-    <section id="how-it-works" className="py-20 bg-gray-50">
+    <section id="how-it-works" className="py-12 md:py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-6">Cómo Funciona</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+        <div className="text-center mb-8 md:mb-16">
+          <h2 className="text-2xl md:text-3xl lg:text-5xl font-bold text-gray-900 mb-4 md:mb-6">Cómo Funciona</h2>
+          <p className="text-base md:text-xl text-gray-600 max-w-3xl mx-auto">
             ¡Ganar es simple! Sigue estos pasos fáciles para unirte a nuestras rifas y comenzar tu camino hacia premios
             increíbles.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
           {steps.map((step, index) => (
             <Card
               key={index}
               className="relative bg-white border-0 shadow-lg hover:shadow-xl transition-shadow duration-300"
             >
-              <CardContent className="p-8 text-center">
+              <CardContent className="p-6 md:p-8 text-center">
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">
                   {step.step}
                 </div>
-                <div className="mb-6 flex justify-center">{step.icon}</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{step.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{step.description}</p>
+                <div className="mb-4 md:mb-6 flex justify-center">{step.icon}</div>
+                <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4">{step.title}</h3>
+                <p className="text-sm md:text-base text-gray-600 leading-relaxed">{step.description}</p>
               </CardContent>
             </Card>
           ))}

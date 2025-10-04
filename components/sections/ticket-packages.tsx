@@ -535,12 +535,12 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
         })}
       </div>
 
-      <div className="text-center">
+      <div className="text-center px-4">
         <Dialog open={showLuckyDialog} onOpenChange={setShowLuckyDialog}>
           <DialogTrigger asChild>
             <Button
               size="lg"
-              className="rainbow-glow text-white font-bold px-16 py-8 text-2xl shadow-2xl transform hover:scale-105 transition-all duration-300 relative overflow-hidden"
+              className="rainbow-glow text-white font-bold px-6 sm:px-12 md:px-16 py-4 sm:py-6 md:py-8 text-base sm:text-xl md:text-2xl shadow-2xl transform hover:scale-105 transition-all duration-300 relative overflow-hidden w-full sm:w-auto"
               style={{
                 background: "linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #00ff00, #0080ff, #8000ff, #ff0000)",
                 backgroundSize: "400% 400%",
@@ -548,56 +548,59 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
               data-lucky-numbers-trigger
               disabled={isLoadingAllTickets}
             >
-              <Shuffle className="h-8 w-8 mr-4" />
-              {isLoadingAllTickets ? "CARGANDO..." : "💰 MÁQUINA DE LA SUERTE 💰"}
-              <Sparkles className="h-8 w-8 ml-4" />
+              <Shuffle className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 mr-2 sm:mr-4" />
+              <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+                {isLoadingAllTickets ? "CARGANDO..." : "💰 MÁQUINA DE LA SUERTE 💰"}
+              </span>
+              <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 ml-2 sm:ml-4" />
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="max-w-md bg-white border-slate-200">
+          <DialogContent className="max-w-[95vw] sm:max-w-md bg-white border-slate-200 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-center text-slate-800 mb-4">
+              <DialogTitle className="text-xl sm:text-2xl font-bold text-center text-slate-800 mb-4">
                 🎰 Generador de Números de la Suerte 🎰
               </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-6">
               <div>
-                <Label htmlFor="lucky-amount" className="text-slate-700 text-lg font-semibold">
+                <Label htmlFor="lucky-amount" className="text-slate-700 text-base sm:text-lg font-semibold">
                   ¿Cuántos boletos quieres generar?
                 </Label>
                 <Input
                   id="lucky-amount"
                   type="number"
                   min="1"
-                  // Use totalAvailable from SWR hook
                   max={Math.min(1000, totalAvailable)}
                   value={luckyNumberAmount}
                   onChange={(e) => setLuckyNumberAmount(e.target.value)}
                   placeholder="Máximo 1,000 por intento"
-                  className="mt-2 bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-400 text-lg p-4"
+                  className="mt-2 bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-400 text-base sm:text-lg p-3 sm:p-4"
                 />
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">
                   Máximo 1,000 boletos por intento ({totalAvailable} disponibles)
                 </p>
               </div>
 
               {isGenerating && (
                 <div className="text-center py-8">
-                  <div className="text-6xl slot-animation mb-4">🎰</div>
-                  <div className="text-xl font-bold text-amber-600 mb-2">Generando Números de la Suerte...</div>
-                  <div className="text-slate-600">🍀 ¡La buena suerte viene en camino! 🍀</div>
+                  <div className="text-5xl sm:text-6xl slot-animation mb-4">🎰</div>
+                  <div className="text-lg sm:text-xl font-bold text-amber-600 mb-2">
+                    Generando Números de la Suerte...
+                  </div>
+                  <div className="text-sm sm:text-base text-slate-600">🍀 ¡La buena suerte viene en camino! 🍀</div>
                 </div>
               )}
 
               {generatedNumbers.length > 0 && !isGenerating && (
                 <div className="space-y-4">
                   <div className="text-center">
-                    <div className="text-2xl mb-2">🎉 ¡Tus Números de la Suerte! 🎉</div>
-                    <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg max-h-40 overflow-y-auto">
-                      <div className="flex flex-wrap gap-2 justify-center">
+                    <div className="text-xl sm:text-2xl mb-2">🎉 ¡Tus Números de la Suerte! 🎉</div>
+                    <div className="bg-amber-50 border border-amber-200 p-3 sm:p-4 rounded-lg max-h-40 overflow-y-auto">
+                      <div className="flex flex-wrap gap-1 sm:gap-2 justify-center">
                         {generatedNumbers.map((number) => (
-                          <Badge key={number} className="bg-amber-500 text-white text-lg px-3 py-1">
+                          <Badge key={number} className="bg-amber-500 text-white text-sm sm:text-lg px-2 sm:px-3 py-1">
                             {number}
                           </Badge>
                         ))}
@@ -606,13 +609,17 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
                   </div>
 
                   <div className="text-center space-y-2">
-                    <div className="text-lg font-semibold text-slate-800">Total: {generatedNumbers.length} boletos</div>
-                    <div className="text-xl font-bold text-amber-600">Precio: ${generatedNumbers.length * 20}</div>
+                    <div className="text-base sm:text-lg font-semibold text-slate-800">
+                      Total: {generatedNumbers.length} boletos
+                    </div>
+                    <div className="text-lg sm:text-xl font-bold text-amber-600">
+                      Precio: ${generatedNumbers.length * 20}
+                    </div>
                   </div>
 
                   <Button
                     onClick={handleSaveAndBuyLucky}
-                    className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-4 text-lg"
+                    className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-3 sm:py-4 text-base sm:text-lg"
                   >
                     Guardar y Comprar Ahora 🛒
                   </Button>
@@ -622,10 +629,10 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
               {!isGenerating && generatedNumbers.length === 0 && (
                 <Button
                   onClick={generateLuckyNumbers}
-                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-4 text-lg"
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-3 sm:py-4 text-base sm:text-lg"
                   disabled={!luckyNumberAmount || Number.parseInt(luckyNumberAmount) <= 0 || isLoadingAllTickets}
                 >
-                  <Shuffle className="h-6 w-6 mr-2" />
+                  <Shuffle className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
                   ¡Generar Números de la Suerte! 🎲
                 </Button>
               )}
@@ -960,11 +967,11 @@ function SectionDialogContent({
   return (
     <>
       <DialogHeader>
-        <DialogTitle className="text-amber-600 text-xl flex items-center justify-between">
-          <span>
+        <DialogTitle className="text-amber-600 text-lg sm:text-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <span className="text-base sm:text-lg">
             Boletos {startNum.toString().padStart(4, "0")} - {endNum.toString().padStart(4, "0")}
           </span>
-          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
+          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-xs sm:text-sm">
             {availableCount} disponibles
           </Badge>
         </DialogTitle>
@@ -977,13 +984,13 @@ function SectionDialogContent({
       ) : (
         <>
           <div className="overflow-y-auto max-h-[60vh]">
-            <div className="grid grid-cols-10 gap-2 p-4">
+            <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-1 sm:gap-2 p-2 sm:p-4">
               {ticketNumbers.map((ticket) => (
                 <Button
                   key={ticket.number}
                   variant="outline"
                   size="sm"
-                  className={`h-8 text-xs ${
+                  className={`h-7 sm:h-8 text-[10px] sm:text-xs ${
                     !ticket.available
                       ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed opacity-50"
                       : selectedTickets.includes(ticket.number)
@@ -999,30 +1006,30 @@ function SectionDialogContent({
             </div>
           </div>
 
-          <div className="flex justify-between items-center pt-4 border-t border-slate-200">
-            <div className="flex gap-4 text-sm">
-              <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 pt-4 border-t border-slate-200">
+            <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <div className="w-3 h-3 border border-slate-300 bg-white rounded"></div>
                 <span className="text-slate-600">Disponible</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <div className="w-3 h-3 bg-amber-500 rounded"></div>
                 <span className="text-slate-600">Seleccionado</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <div className="w-3 h-3 bg-gray-400 rounded"></div>
                 <span className="text-slate-600">Vendido</span>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <p className="text-amber-600 font-semibold">{availableCount} boletos disponibles</p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+              <p className="text-amber-600 font-semibold text-sm sm:text-base">{availableCount} boletos disponibles</p>
               {selectedTickets.filter((ticket) => {
                 const ticketNum = Number.parseInt(ticket)
                 return ticketNum >= startNum && ticketNum <= endNum
               }).length > 0 && (
                 <Button
                   onClick={() => handlePurchaseFromTable(ticketNumbers.map((t) => t.number))}
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white w-full sm:w-auto"
                   size="sm"
                 >
                   <ShoppingCart className="h-4 w-4 mr-1" />

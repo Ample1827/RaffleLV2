@@ -10,7 +10,12 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { getAllPurchasesAdmin, updatePurchaseStatusAdmin, deletePurchaseAdmin } from "@/app/actions/admin-actions"
+import {
+  getAllPurchasesAdmin,
+  updatePurchaseStatusAdmin,
+  deletePurchaseAdmin,
+  getAvailableTicketsCount,
+} from "@/app/actions/admin-actions"
 import { seedTickets } from "@/app/actions/seed-tickets"
 import { checkTicketCount } from "@/app/actions/check-tickets"
 import {
@@ -36,6 +41,8 @@ interface AdminStats {
   pendingPurchases: number
   approvedPurchases: number
   totalRevenue: number
+  totalTickets: number
+  availableTickets: number
 }
 
 export default function AdminPage() {
@@ -51,6 +58,8 @@ export default function AdminPage() {
     pendingPurchases: 0,
     approvedPurchases: 0,
     totalRevenue: 0,
+    totalTickets: 10000,
+    availableTickets: 0,
   })
   const [loading, setLoading] = useState(false)
   const [selectedPurchase, setSelectedPurchase] = useState<any>(null)
@@ -61,7 +70,6 @@ export default function AdminPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check if already authenticated
     const isAdmin = localStorage.getItem("isAdmin")
     const adminEmail = localStorage.getItem("adminEmail")
 
@@ -92,7 +100,6 @@ export default function AdminPage() {
     e.preventDefault()
     setLoginError("")
 
-    // Simple admin authentication
     if (email === "Adalromero99@gmail.com" && password === "admin123") {
       localStorage.setItem("isAdmin", "true")
       localStorage.setItem("adminEmail", email)
@@ -118,6 +125,9 @@ export default function AdminPage() {
       const purchasesData = await getAllPurchasesAdmin()
       console.log("[v0] Purchases data:", purchasesData)
 
+      const availableCount = await getAvailableTicketsCount()
+      console.log("[v0] Available tickets:", availableCount)
+
       setPurchases(purchasesData || [])
       setFilteredPurchases(purchasesData || [])
 
@@ -132,6 +142,8 @@ export default function AdminPage() {
         pendingPurchases,
         approvedPurchases,
         totalRevenue,
+        totalTickets: 10000,
+        availableTickets: availableCount,
       })
     } catch (error) {
       console.error("[v0] Error fetching admin data:", error)
@@ -146,9 +158,16 @@ export default function AdminPage() {
       console.log("[v0] [Admin Page] Marking purchase as sold:", purchaseId)
       const result = await updatePurchaseStatusAdmin(purchaseId, "approved")
       console.log("[v0] [Admin Page] Update result:", result)
-      await fetchAdminData() // Refresh data
+
+      if (result.whatsappUrl) {
+        window.open(result.whatsappUrl, "_blank")
+        alert("Boletos marcados como vendidos. Se abrió WhatsApp para enviar la confirmación al cliente.")
+      } else {
+        alert("Boletos marcados como vendidos exitosamente")
+      }
+
+      await fetchAdminData()
       setSelectedPurchase(null)
-      alert("Boletos marcados como vendidos y actualizados en todo el sitio")
     } catch (error) {
       console.error("[v0] [Admin Page] Error updating purchase status:", error)
       const errorMessage = error instanceof Error ? error.message : "Error desconocido al actualizar el estado"
@@ -166,7 +185,7 @@ export default function AdminPage() {
       console.log("[v0] [Admin Page] Marking purchase as pending:", purchaseId)
       const result = await updatePurchaseStatusAdmin(purchaseId, "pending")
       console.log("[v0] [Admin Page] Update result:", result)
-      await fetchAdminData() // Refresh data
+      await fetchAdminData()
       setSelectedPurchase(null)
       alert("Boletos marcados como pendientes y disponibles nuevamente")
     } catch (error) {
@@ -189,7 +208,7 @@ export default function AdminPage() {
     try {
       console.log("[v0] Deleting purchase:", purchaseId)
       await deletePurchaseAdmin(purchaseId)
-      await fetchAdminData() // Refresh data
+      await fetchAdminData()
       setSelectedPurchase(null)
       alert("Compra eliminada exitosamente. Los boletos están disponibles nuevamente.")
     } catch (error) {
@@ -273,7 +292,6 @@ export default function AdminPage() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Decorative background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl"></div>
@@ -366,140 +384,156 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Panel de Administración</h1>
-            <p className="text-gray-600">Gestiona boletos y marca como vendidos</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Panel de Administración</h1>
+            <p className="text-sm md:text-base text-gray-600">Gestiona boletos y marca como vendidos</p>
             {ticketCount !== null && (
-              <p className="text-sm text-green-600 font-semibold mt-1">
+              <p className="text-xs md:text-sm text-green-600 font-semibold mt-1">
                 ✓ {ticketCount.toLocaleString()} boletos en la base de datos
               </p>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button
               onClick={handleCheckTickets}
               disabled={checkingTickets}
               variant="outline"
-              className="gap-2 bg-blue-50 border-blue-500 text-blue-700 hover:bg-blue-100"
+              className="gap-2 bg-blue-50 border-blue-500 text-blue-700 hover:bg-blue-100 text-sm"
             >
               <Ticket className="h-4 w-4" />
-              {checkingTickets ? "Verificando..." : "Verificar Boletos"}
+              <span className="hidden sm:inline">{checkingTickets ? "Verificando..." : "Verificar Boletos"}</span>
+              <span className="sm:hidden">{checkingTickets ? "Verificando..." : "Verificar"}</span>
             </Button>
             <Button
               onClick={handleSeedDatabase}
               disabled={seeding}
               variant="outline"
-              className="gap-2 bg-green-50 border-green-500 text-green-700 hover:bg-green-100"
+              className="gap-2 bg-green-50 border-green-500 text-green-700 hover:bg-green-100 text-sm"
             >
               <Database className="h-4 w-4" />
-              {seeding ? "Inicializando..." : "Inicializar Boletos"}
+              <span className="hidden sm:inline">{seeding ? "Inicializando..." : "Inicializar Boletos"}</span>
+              <span className="sm:hidden">{seeding ? "Inicializando..." : "Inicializar"}</span>
             </Button>
-            <Button onClick={handleLogout} variant="outline" className="gap-2 bg-transparent">
+            <Button onClick={handleLogout} variant="outline" className="gap-2 bg-transparent text-sm">
               <LogOut className="h-4 w-4" />
-              Cerrar Sesión
+              <span className="hidden sm:inline">Cerrar Sesión</span>
+              <span className="sm:hidden">Salir</span>
             </Button>
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <div className="bg-white rounded-lg p-6 shadow-lg">
-            <div className="flex items-center space-x-3 mb-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 mb-8">
+          <div className="bg-white rounded-lg p-4 md:p-6 shadow-lg">
+            <div className="flex items-center space-x-3 mb-3 md:mb-4">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Ticket className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
+              </div>
+              <h3 className="text-xs md:text-sm font-semibold text-gray-900">Boletos</h3>
+            </div>
+            <p className="text-xl md:text-2xl font-bold text-blue-600">{stats.availableTickets.toLocaleString()}</p>
+            <p className="text-xs text-gray-500 mt-1">de {stats.totalTickets.toLocaleString()}</p>
+          </div>
+
+          <div className="bg-white rounded-lg p-4 md:p-6 shadow-lg">
+            <div className="flex items-center space-x-3 mb-3 md:mb-4">
               <div className="p-2 bg-purple-100 rounded-lg">
-                <ShoppingCart className="h-6 w-6 text-purple-600" />
+                <ShoppingCart className="h-5 w-5 md:h-6 md:w-6 text-purple-600" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900">Total Compras</h3>
+              <h3 className="text-xs md:text-sm font-semibold text-gray-900">Total Compras</h3>
             </div>
-            <p className="text-2xl font-bold text-purple-600">{stats.totalPurchases}</p>
+            <p className="text-xl md:text-2xl font-bold text-purple-600">{stats.totalPurchases}</p>
           </div>
 
-          <div className="bg-white rounded-lg p-6 shadow-lg">
-            <div className="flex items-center space-x-3 mb-4">
+          <div className="bg-white rounded-lg p-4 md:p-6 shadow-lg">
+            <div className="flex items-center space-x-3 mb-3 md:mb-4">
               <div className="p-2 bg-yellow-100 rounded-lg">
-                <Clock className="h-6 w-6 text-yellow-600" />
+                <Clock className="h-5 w-5 md:h-6 md:w-6 text-yellow-600" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900">Pendientes</h3>
+              <h3 className="text-xs md:text-sm font-semibold text-gray-900">Pendientes</h3>
             </div>
-            <p className="text-2xl font-bold text-yellow-600">{stats.pendingPurchases}</p>
+            <p className="text-xl md:text-2xl font-bold text-yellow-600">{stats.pendingPurchases}</p>
           </div>
 
-          <div className="bg-white rounded-lg p-6 shadow-lg">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-gray-200 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-gray-600" />
+          <div className="bg-white rounded-lg p-4 md:p-6 shadow-lg">
+            <div className="flex items-center space-x-3 mb-3 md:mb-4">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-emerald-600" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900">Vendidos</h3>
+              <h3 className="text-xs md:text-sm font-semibold text-gray-900">Vendidos</h3>
             </div>
-            <p className="text-2xl font-bold text-gray-600">{stats.approvedPurchases}</p>
+            <p className="text-xl md:text-2xl font-bold text-emerald-600">{stats.approvedPurchases}</p>
           </div>
 
-          <div className="bg-white rounded-lg p-6 shadow-lg">
-            <div className="flex items-center space-x-3 mb-4">
+          <div className="bg-white rounded-lg p-4 md:p-6 shadow-lg">
+            <div className="flex items-center space-x-3 mb-3 md:mb-4">
               <div className="p-2 bg-green-100 rounded-lg">
-                <DollarSign className="h-6 w-6 text-green-600" />
+                <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-green-600" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900">Ingresos</h3>
+              <h3 className="text-xs md:text-sm font-semibold text-gray-900">Ingresos</h3>
             </div>
-            <p className="text-2xl font-bold text-green-600">${stats.totalRevenue}</p>
+            <p className="text-xl md:text-2xl font-bold text-green-600">${stats.totalRevenue}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg mb-6 p-4">
-          <div className="flex items-center gap-3">
-            <Search className="h-5 w-5 text-gray-400" />
+        <div className="bg-white rounded-lg shadow-lg mb-6 p-3 md:p-4">
+          <div className="flex items-center gap-2 md:gap-3">
+            <Search className="h-4 w-4 md:h-5 md:w-5 text-gray-400 flex-shrink-0" />
             <Input
               type="text"
-              placeholder="Buscar por ID de Reserva (TKT-xxx-xxx), nombre, teléfono o UUID..."
+              placeholder="Buscar por ID, nombre o teléfono..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 h-12 text-base"
+              className="flex-1 h-10 md:h-12 text-sm md:text-base"
             />
             {searchQuery && (
-              <Button variant="ghost" onClick={() => setSearchQuery("")} className="text-gray-500">
+              <Button variant="ghost" onClick={() => setSearchQuery("")} className="text-gray-500 text-sm px-2">
                 Limpiar
               </Button>
             )}
           </div>
           {searchQuery && (
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-xs md:text-sm text-gray-600 mt-2">
               Mostrando {filteredPurchases.length} de {purchases.length} compras
             </p>
           )}
         </div>
 
         <div className="bg-white rounded-lg shadow-lg">
-          <div className="p-6 border-b border-slate-200">
-            <h2 className="text-xl font-semibold text-gray-900">Gestión de Boletos</h2>
-            <p className="text-gray-600">Revisa, marca como vendidos o elimina compras</p>
+          <div className="p-4 md:p-6 border-b border-slate-200">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-900">Gestión de Boletos</h2>
+            <p className="text-sm md:text-base text-gray-600">Revisa, marca como vendidos o elimina compras</p>
           </div>
 
-          <div className="p-6">
+          <div className="p-3 md:p-6">
             {filteredPurchases.length === 0 ? (
               <div className="text-center py-12">
-                <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <ShoppingCart className="h-12 w-12 md:h-16 md:w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2">
                   {searchQuery ? "No se encontraron compras" : "No hay compras registradas"}
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-sm md:text-base text-gray-600">
                   {searchQuery
                     ? "Intenta con otro término de búsqueda"
                     : "Las compras aparecerán aquí cuando los usuarios compren boletos."}
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {filteredPurchases.map((purchase) => (
                   <Card
                     key={purchase.id}
                     className={`border ${purchase.status === "pending" ? "border-yellow-200 bg-yellow-50" : "border-emerald-200 bg-emerald-50"}`}
                   >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
+                    <CardHeader className="pb-3 p-3 md:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="space-y-1">
                           {purchase.reservation_id && (
-                            <div className="font-mono text-lg font-bold text-amber-600">{purchase.reservation_id}</div>
+                            <div className="font-mono text-base md:text-lg font-bold text-amber-600">
+                              {purchase.reservation_id}
+                            </div>
                           )}
-                          <CardTitle className="text-sm text-gray-500">
+                          <CardTitle className="text-xs md:text-sm text-gray-500">
                             UUID: {purchase.id.slice(0, 13).toUpperCase()}
                           </CardTitle>
                         </div>
@@ -511,47 +545,47 @@ export default function AdminPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setSelectedPurchase(purchase)}
-                                className="border-slate-300"
+                                className="border-slate-300 text-xs md:text-sm"
                               >
                                 Ver Detalles
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
+                            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                               <DialogHeader>
-                                <DialogTitle>
+                                <DialogTitle className="text-base md:text-lg">
                                   {selectedPurchase?.reservation_id ||
                                     `Compra #${selectedPurchase?.id.slice(0, 13).toUpperCase()}`}
                                 </DialogTitle>
                               </DialogHeader>
 
                               {selectedPurchase && (
-                                <div className="space-y-6">
+                                <div className="space-y-4 md:space-y-6">
                                   {(selectedPurchase.buyer_name ||
                                     selectedPurchase.buyer_phone ||
                                     selectedPurchase.buyer_state) && (
-                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                        <User className="h-5 w-5 text-blue-600" />
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
+                                      <h4 className="font-semibold text-sm md:text-base text-gray-900 mb-3 flex items-center gap-2">
+                                        <User className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
                                         Información del Comprador
                                       </h4>
                                       <div className="space-y-2">
                                         {selectedPurchase.buyer_name && (
-                                          <div className="flex items-center gap-2 text-sm">
-                                            <User className="h-4 w-4 text-gray-500" />
+                                          <div className="flex items-center gap-2 text-xs md:text-sm">
+                                            <User className="h-3 w-3 md:h-4 md:w-4 text-gray-500" />
                                             <span className="font-medium">Nombre:</span>
-                                            <span>{selectedPurchase.buyer_name}</span>
+                                            <span className="break-all">{selectedPurchase.buyer_name}</span>
                                           </div>
                                         )}
                                         {selectedPurchase.buyer_phone && (
-                                          <div className="flex items-center gap-2 text-sm">
-                                            <Phone className="h-4 w-4 text-gray-500" />
+                                          <div className="flex items-center gap-2 text-xs md:text-sm">
+                                            <Phone className="h-3 w-3 md:h-4 md:w-4 text-gray-500" />
                                             <span className="font-medium">Teléfono:</span>
                                             <span>{selectedPurchase.buyer_phone}</span>
                                           </div>
                                         )}
                                         {selectedPurchase.buyer_state && (
-                                          <div className="flex items-center gap-2 text-sm">
-                                            <MapPin className="h-4 w-4 text-gray-500" />
+                                          <div className="flex items-center gap-2 text-xs md:text-sm">
+                                            <MapPin className="h-3 w-3 md:h-4 md:w-4 text-gray-500" />
                                             <span className="font-medium">Estado:</span>
                                             <span>{selectedPurchase.buyer_state}</span>
                                           </div>
@@ -562,41 +596,49 @@ export default function AdminPage() {
 
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-3">
-                                      <h4 className="font-semibold text-gray-900">Información de Compra</h4>
+                                      <h4 className="font-semibold text-sm md:text-base text-gray-900">
+                                        Información de Compra
+                                      </h4>
                                       <div className="space-y-2">
                                         {selectedPurchase.reservation_id && (
                                           <div className="flex items-center gap-2">
-                                            <Ticket className="h-4 w-4 text-gray-500" />
-                                            <span className="text-sm font-mono font-semibold text-amber-600">
+                                            <Ticket className="h-3 w-3 md:h-4 md:w-4 text-gray-500" />
+                                            <span className="text-xs md:text-sm font-mono font-semibold text-amber-600">
                                               {selectedPurchase.reservation_id}
                                             </span>
                                           </div>
                                         )}
                                         <div className="flex items-center gap-2">
-                                          <Ticket className="h-4 w-4 text-gray-500" />
-                                          <span className="text-sm">
+                                          <Ticket className="h-3 w-3 md:h-4 md:w-4 text-gray-500" />
+                                          <span className="text-xs md:text-sm">
                                             {selectedPurchase.ticket_numbers.length} boletos
                                           </span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                          <DollarSign className="h-4 w-4 text-gray-500" />
-                                          <span className="text-sm">${selectedPurchase.total_amount}</span>
+                                          <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-gray-500" />
+                                          <span className="text-xs md:text-sm">${selectedPurchase.total_amount}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                          <Calendar className="h-4 w-4 text-gray-500" />
-                                          <span className="text-sm">{formatDate(selectedPurchase.created_at)}</span>
+                                          <Calendar className="h-3 w-3 md:h-4 md:w-4 text-gray-500" />
+                                          <span className="text-xs md:text-sm">
+                                            {formatDate(selectedPurchase.created_at)}
+                                          </span>
                                         </div>
                                       </div>
                                     </div>
 
                                     <div className="space-y-3">
-                                      <h4 className="font-semibold text-gray-900">Estado Actual</h4>
+                                      <h4 className="font-semibold text-sm md:text-base text-gray-900">
+                                        Estado Actual
+                                      </h4>
                                       <div className="space-y-2">{getStatusBadge(selectedPurchase.status)}</div>
                                     </div>
                                   </div>
 
                                   <div>
-                                    <h4 className="font-semibold text-gray-900 mb-2">Números de Boletos</h4>
+                                    <h4 className="font-semibold text-sm md:text-base text-gray-900 mb-2">
+                                      Números de Boletos
+                                    </h4>
                                     <div className="flex flex-wrap gap-1 max-h-40 overflow-y-auto">
                                       {selectedPurchase.ticket_numbers.map((ticketNum: string, index: number) => (
                                         <Badge
@@ -610,12 +652,12 @@ export default function AdminPage() {
                                     </div>
                                   </div>
 
-                                  <div className="space-y-4">
-                                    <div className="flex gap-3">
+                                  <div className="space-y-3 md:space-y-4">
+                                    <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
                                       <Button
                                         onClick={() => handleMarkAsSold(selectedPurchase.id)}
                                         disabled={updating || selectedPurchase.status === "approved"}
-                                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm"
                                       >
                                         <CheckCircle className="h-4 w-4 mr-2" />
                                         {selectedPurchase.status === "approved" ? "Ya Vendido" : "Marcar como Vendido"}
@@ -624,7 +666,7 @@ export default function AdminPage() {
                                         onClick={() => handleMarkAsPending(selectedPurchase.id)}
                                         disabled={updating || selectedPurchase.status === "pending"}
                                         variant="outline"
-                                        className="flex-1 border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                                        className="flex-1 border-yellow-500 text-yellow-600 hover:bg-yellow-50 text-sm"
                                       >
                                         <Clock className="h-4 w-4 mr-2" />
                                         {selectedPurchase.status === "pending" ? "Ya Pendiente" : "Marcar Pendiente"}
@@ -634,7 +676,7 @@ export default function AdminPage() {
                                       onClick={() => handleDeletePurchase(selectedPurchase.id)}
                                       disabled={updating}
                                       variant="outline"
-                                      className="w-full border-red-500 text-red-600 hover:bg-red-50"
+                                      className="w-full border-red-500 text-red-600 hover:bg-red-50 text-sm"
                                     >
                                       <Trash2 className="h-4 w-4 mr-2" />
                                       Eliminar Compra
@@ -646,32 +688,36 @@ export default function AdminPage() {
                           </Dialog>
                         </div>
                       </div>
-                      <CardDescription className="space-y-1">
+                      <CardDescription className="space-y-1 text-xs md:text-sm">
                         <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
-                          {formatDate(purchase.created_at)}
+                          <Calendar className="h-3 w-3 md:h-4 md:w-4" />
+                          <span className="text-xs md:text-sm">{formatDate(purchase.created_at)}</span>
                         </div>
                         {purchase.buyer_name && (
                           <div className="flex items-center gap-2 text-blue-600">
-                            <User className="h-4 w-4" />
-                            {purchase.buyer_name}
-                            {purchase.buyer_phone && ` • ${purchase.buyer_phone}`}
+                            <User className="h-3 w-3 md:h-4 md:w-4" />
+                            <span className="text-xs md:text-sm break-all">
+                              {purchase.buyer_name}
+                              {purchase.buyer_phone && ` • ${purchase.buyer_phone}`}
+                            </span>
                           </div>
                         )}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <CardContent className="p-3 md:p-6">
+                      <div className="grid grid-cols-3 gap-2 md:gap-4">
                         <div>
-                          <p className="text-sm text-gray-600 mb-1">Boletos</p>
-                          <p className="font-semibold text-amber-600">{purchase.ticket_numbers.length}</p>
+                          <p className="text-xs md:text-sm text-gray-600 mb-1">Boletos</p>
+                          <p className="text-sm md:text-base font-semibold text-amber-600">
+                            {purchase.ticket_numbers.length}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 mb-1">Total</p>
-                          <p className="font-semibold text-green-600">${purchase.total_amount}</p>
+                          <p className="text-xs md:text-sm text-gray-600 mb-1">Total</p>
+                          <p className="text-sm md:text-base font-semibold text-green-600">${purchase.total_amount}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 mb-1">Estado</p>
+                          <p className="text-xs md:text-sm text-gray-600 mb-1">Estado</p>
                           {getStatusBadge(purchase.status)}
                         </div>
                       </div>

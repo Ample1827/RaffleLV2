@@ -35,6 +35,56 @@ export async function getAllPurchasesAdmin() {
   }
 }
 
+export async function getAvailableTicketsCount() {
+  const supabase = createAdminClient()
+
+  try {
+    console.log("[v0] [Admin] Fetching available tickets count")
+
+    const { count, error } = await supabase
+      .from("tickets")
+      .select("*", { count: "exact", head: true })
+      .eq("is_available", true)
+
+    if (error) {
+      console.error("[v0] [Admin] Error fetching available tickets count:", error)
+      throw error
+    }
+
+    console.log("[v0] [Admin] Available tickets count:", count)
+    return count || 0
+  } catch (error) {
+    console.error("[v0] [Admin] Unexpected error in getAvailableTicketsCount:", error)
+    throw error
+  }
+}
+
+async function sendWhatsAppConfirmation(phone: string, reservationId: string) {
+  try {
+    // Format phone number (remove any non-digit characters)
+    const cleanPhone = phone.replace(/\D/g, "")
+
+    // Create the verification URL
+    const verifyUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://tu-sitio.com"}/verify-tickets`
+
+    // Create WhatsApp message
+    const message = `¡Hola! 🎉\n\nTu pago fue confirmado exitosamente.\n\n📋 ID de Reserva: ${reservationId}\n\n✅ Puedes verificar tus boletos aquí:\n${verifyUrl}\n\n¡Mucha suerte! 🍀`
+
+    // WhatsApp API URL (using WhatsApp Business API or a service like Twilio)
+    // For now, we'll create a WhatsApp link that opens in the browser
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`
+
+    console.log("[v0] [Admin] WhatsApp confirmation URL generated:", whatsappUrl)
+
+    // In a production environment, you would use a service like Twilio to send the message automatically
+    // For now, we'll return the URL so the admin can click it to send the message
+    return { success: true, whatsappUrl }
+  } catch (error) {
+    console.error("[v0] [Admin] Error generating WhatsApp message:", error)
+    return { success: false, error: "Error generando mensaje de WhatsApp" }
+  }
+}
+
 export async function updatePurchaseStatusAdmin(purchaseId: string, status: "pending" | "approved") {
   const supabase = createAdminClient()
 
@@ -74,7 +124,6 @@ export async function updatePurchaseStatusAdmin(purchaseId: string, status: "pen
     if (purchase.ticket_numbers && purchase.ticket_numbers.length > 0) {
       console.log("[v0] [Admin] Updating ticket availability for status:", status)
 
-      // When marking as "pending", also keep tickets unavailable (reserved)
       const { error: ticketError } = await supabase
         .from("tickets")
         .update({ is_available: false })
@@ -86,6 +135,16 @@ export async function updatePurchaseStatusAdmin(purchaseId: string, status: "pen
       }
 
       console.log("[v0] [Admin] Tickets updated successfully")
+    }
+
+    if (status === "approved" && purchase.buyer_phone && purchase.reservation_id) {
+      console.log("[v0] [Admin] Generating WhatsApp confirmation for:", purchase.buyer_phone)
+      const whatsappResult = await sendWhatsAppConfirmation(purchase.buyer_phone, purchase.reservation_id)
+
+      if (whatsappResult.success && whatsappResult.whatsappUrl) {
+        console.log("[v0] [Admin] WhatsApp URL generated:", whatsappResult.whatsappUrl)
+        return { ...updatedPurchase, whatsappUrl: whatsappResult.whatsappUrl }
+      }
     }
 
     console.log("[v0] [Admin] Purchase status updated successfully")
