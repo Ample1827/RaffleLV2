@@ -40,7 +40,7 @@ const TicketButton = memo(
               ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed opacity-50"
               : isSelected
                 ? "bg-amber-500 text-white border-amber-500 shadow-md"
-                : "border-slate-300 text-slate-700 bg-white hover:bg-amber-100 hover:border-amber-400 active:bg-amber-500 active:text-white active:border-amber-500 active:shadow-lg active:scale-95"
+                : "border-slate-300 text-slate-700 bg-white hover:bg-amber-100 hover:border-amber-400"
           }
         `}
         onClick={() => onToggle(ticket.number, ticket.available)}
