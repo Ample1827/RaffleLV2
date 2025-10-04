@@ -2,8 +2,8 @@ import type { Metadata } from "next"
 import { DrawEntrySystem } from "@/components/sections/draw-entry-system"
 
 export const metadata: Metadata = {
-  title: "Enter Draws - RafflePro",
-  description: "Enter different raffle draws and manage your entries",
+  title: "Ingresar a Rifas - Rifas Romero",
+  description: "Participa en diferentes sorteos y gestiona tus boletos",
 }
 
 export default function DrawsPage() {

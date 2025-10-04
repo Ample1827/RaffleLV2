@@ -16,21 +16,22 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
-  title: "RafflePro - Win Amazing Prizes with Every Ticket",
+  title: "Rifas Romero - Gana Premios Increíbles con Cada Boleto",
   description:
-    "Join thousands of winners in exciting raffles. From luxury cars to dream vacations, your next big win is just one ticket away!",
-  keywords: "raffle, lottery, prizes, win, tickets, luxury, cars, vacations",
-  authors: [{ name: "RafflePro Team" }],
-  creator: "RafflePro",
-  publisher: "RafflePro",
+    "Participa en rifas emocionantes y gana desde autos de lujo hasta vacaciones soñadas. ¡Tu próximo gran premio está a solo un boleto!",
+  keywords:
+    "rifas, boletos, premios, ganar, sorteos, autos, vacaciones, lotería",
+  authors: [{ name: "Adalberto Romero" }],
+  creator: "Adalberto Romero",
+  publisher: "Rifas Romero",
   robots: "index, follow",
   openGraph: {
-    title: "RafflePro - Win Amazing Prizes",
-    description: "Your next big win is just one ticket away!",
+    title: "Rifas Romero - Gana Premios Increíbles",
+    description: "Tu próximo gran premio está a solo un boleto.",
     type: "website",
-    locale: "en_US",
+    locale: "es_MX",
   },
-  generator: "v0.dev",
+  generator: "ample1827",
 }
 
 export default function RootLayout({

@@ -3,7 +3,7 @@ import { Navbar } from "@/components/navbar"
 import { TicketPackages } from "@/components/sections/ticket-packages"
 
 export const metadata: Metadata = {
-  title: "Comprar Boletos - RafflePro",
+  title: "Comprar Boletos - Rifas Romero",
   description: "Elige tu paquete de boletos y únete a la rifa",
 }
 
