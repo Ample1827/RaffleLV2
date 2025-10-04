@@ -725,7 +725,7 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
                   </Card>
                 </DialogTrigger>
 
-                <DialogContent className="max-w-4xl max-h-[80vh] bg-white border-slate-200">
+                <DialogContent className="max-w-[100vw] sm:max-w-4xl max-h-[90vh] sm:max-h-[80vh] bg-white border-slate-200 p-4 sm:p-6">
                   <SectionDialogContent
                     sectionIndex={i}
                     startNum={startNum}
@@ -996,22 +996,26 @@ function SectionDialogContent({
                   variant="outline"
                   size="sm"
                   className={`
-                    h-10 sm:h-8 
+                    h-11 sm:h-10
+                    min-h-[44px] sm:min-h-[40px]
                     text-xs sm:text-xs 
                     font-semibold
-                    transition-all duration-150
+                    transition-all duration-100
                     touch-manipulation
                     ${
                       !ticket.available
                         ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed opacity-50"
                         : selectedTickets.includes(ticket.number)
-                          ? "bg-amber-500 text-white border-amber-500 shadow-md scale-95"
-                          : "border-slate-300 text-slate-700 bg-white hover:bg-amber-500 hover:text-white hover:border-amber-500 active:scale-90 active:bg-amber-600"
+                          ? "bg-amber-500 text-white border-amber-500 shadow-md"
+                          : "border-slate-300 text-slate-700 bg-white hover:bg-amber-100 hover:border-amber-400 active:bg-amber-500 active:text-white active:border-amber-500 active:shadow-lg"
                     }
                   `}
                   onClick={() => toggleTicketSelection(ticket.number, ticket.available)}
                   disabled={!ticket.available}
-                  style={{ touchAction: "manipulation" }}
+                  style={{
+                    touchAction: "manipulation",
+                    WebkitTapHighlightColor: "transparent",
+                  }}
                 >
                   {ticket.number}
                 </Button>
@@ -1048,13 +1052,17 @@ function SectionDialogContent({
                     text-white font-bold
                     w-full sm:w-auto
                     h-12 sm:h-10
+                    min-h-[48px] sm:min-h-[40px]
                     text-base sm:text-sm
                     shadow-lg
-                    transition-all duration-150
+                    transition-all duration-100
                     active:scale-95
                     touch-manipulation
                   "
-                  style={{ touchAction: "manipulation" }}
+                  style={{
+                    touchAction: "manipulation",
+                    WebkitTapHighlightColor: "transparent",
+                  }}
                 >
                   <ShoppingCart className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
                   Comprar Seleccionados ({selectedInSection.length})
