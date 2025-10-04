@@ -27,7 +27,7 @@ export function Hero() {
   }
 
   return (
-    <section className="relative py-20 lg:py-32 overflow-hidden">
+    <section className="relative py-20 lg:py-32 overflow-hidden bg-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
@@ -35,7 +35,7 @@ export function Hero() {
             <div className="flex items-center justify-center lg:justify-start space-x-2 mb-6">
               <div className="flex items-center space-x-1">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 text-primary fill-current" />
+                  <Star key={i} className="h-5 w-5 fill-current text-amber-400" />
                 ))}
               </div>
               <span className="text-muted-foreground">Confiado por más de 50,000 jugadores</span>
@@ -55,21 +55,21 @@ export function Hero() {
             <div className="grid grid-cols-3 gap-8 text-center lg:text-left">
               <div>
                 <div className="flex items-center justify-center lg:justify-start space-x-2 mb-2">
-                  <Trophy className="h-6 w-6 text-primary" />
+                  <Trophy className="h-6 w-6 text-amber-400" />
                   <span className="text-2xl font-bold text-foreground">$500k MXN</span>
                 </div>
                 <p className="text-muted-foreground">Premios Ganados</p>
               </div>
               <div>
                 <div className="flex items-center justify-center lg:justify-start space-x-2 mb-2">
-                  <Users className="h-6 w-6 text-primary" />
+                  <Users className="h-6 w-6 text-indigo-700" />
                   <span className="text-2xl font-bold text-foreground">25K+</span>
                 </div>
                 <p className="text-muted-foreground">Ganadores Felices</p>
               </div>
               <div>
                 <div className="flex items-center justify-center lg:justify-start space-x-2 mb-2">
-                  <Star className="h-6 w-6 text-primary" />
+                  <Star className="h-6 w-6 text-amber-600" />
                   <span className="text-2xl font-bold text-foreground">4.9/5</span>
                 </div>
                 <p className="text-muted-foreground">Calificación</p>

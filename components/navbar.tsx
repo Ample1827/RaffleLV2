@@ -40,24 +40,24 @@ export function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <Ticket className="h-8 w-8 text-gold" />
+            <Ticket className="h-8 w-8 text-gold text-indigo-500" />
             <span className="text-2xl font-bold text-white">Rifa Romero</span>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/buy-tickets" className="text-gray-300 hover:text-gold transition-colors duration-300">
+            <Link href="/buy-tickets" className="hover:text-gold transition-colors duration-300 text-white">
               Comprar Boletos
             </Link>
-            <Link href="/verify-tickets" className="text-gray-300 hover:text-gold transition-colors duration-300">
+            <Link href="/verify-tickets" className="hover:text-gold transition-colors duration-300 text-white">
               Verificar Boletos
             </Link>
-            <Link href="/pagos" className="text-gray-300 hover:text-gold transition-colors duration-300">
+            <Link href="/pagos" className="hover:text-gold transition-colors duration-300 text-white">
               Pagos
             </Link>
             <button
               onClick={handleContactClick}
-              className="text-gray-300 hover:text-gold transition-colors duration-300"
+              className="hover:text-gold transition-colors duration-300 text-white"
             >
               Contacto
             </button>

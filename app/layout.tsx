@@ -19,8 +19,7 @@ export const metadata: Metadata = {
   title: "Rifas Romero - Gana Premios Increíbles con Cada Boleto",
   description:
     "Participa en rifas emocionantes y gana desde autos de lujo hasta vacaciones soñadas. ¡Tu próximo gran premio está a solo un boleto!",
-  keywords:
-    "rifas, boletos, premios, ganar, sorteos, autos, vacaciones, lotería",
+  keywords: "rifas, boletos, premios, ganar, sorteos, autos, vacaciones, lotería",
   authors: [{ name: "Adalberto Romero" }],
   creator: "Adalberto Romero",
   publisher: "Rifas Romero",
@@ -32,6 +31,9 @@ export const metadata: Metadata = {
     locale: "es_MX",
   },
   generator: "ample1827",
+  icons: {
+    icon: "/icon.svg",
+  },
 }
 
 export default function RootLayout({
