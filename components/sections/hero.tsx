@@ -1,17 +1,11 @@
 "use client"
 
-import { useState } from "react"
 import { Star, Users, Trophy } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { useAllTickets, useTicketsByRange } from "@/lib/hooks/use-tickets"
-import { ShoppingCart } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useAllTickets } from "@/lib/hooks/use-tickets"
 
 export function Hero() {
-  const [openSectionDialog, setOpenSectionDialog] = useState<number | null>(null)
-  const [selectedTickets, setSelectedTickets] = useState<string[]>([])
-
+  const router = useRouter()
   const { sectionCounts, isLoading: isLoadingAllTickets } = useAllTickets()
 
   const ticketSections = Array.from({ length: 10 }, (_, i) => {
@@ -29,25 +23,7 @@ export function Hero() {
   })
 
   const handleSectionClick = (sectionIndex: number) => {
-    setOpenSectionDialog(sectionIndex)
-  }
-
-  const toggleTicketSelection = (ticketNumber: string, isAvailable: boolean) => {
-    if (!isAvailable) {
-      alert("Este boleto ya no está disponible")
-      return
-    }
-    setSelectedTickets((prev) =>
-      prev.includes(ticketNumber) ? prev.filter((t) => t !== ticketNumber) : [...prev, ticketNumber],
-    )
-  }
-
-  const handlePurchaseFromDialog = () => {
-    if (selectedTickets.length > 0) {
-      // Redirect to buy tickets page with selected tickets
-      const ticketsParam = selectedTickets.join(",")
-      window.location.href = `/buy-tickets?tickets=${ticketsParam}`
-    }
+    router.push(`/buy-tickets?section=${sectionIndex}`)
   }
 
   return (
@@ -142,145 +118,6 @@ export function Hero() {
           </div>
         </div>
       </div>
-
-      {openSectionDialog !== null && (
-        <TicketSelectionDialog
-          sectionIndex={openSectionDialog}
-          open={openSectionDialog !== null}
-          onOpenChange={(open) => {
-            if (!open) {
-              setOpenSectionDialog(null)
-              setSelectedTickets([])
-            }
-          }}
-          selectedTickets={selectedTickets}
-          toggleTicketSelection={toggleTicketSelection}
-          onPurchase={handlePurchaseFromDialog}
-        />
-      )}
     </section>
-  )
-}
-
-function TicketSelectionDialog({
-  sectionIndex,
-  open,
-  onOpenChange,
-  selectedTickets,
-  toggleTicketSelection,
-  onPurchase,
-}: {
-  sectionIndex: number
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  selectedTickets: string[]
-  toggleTicketSelection: (ticketNumber: string, isAvailable: boolean) => void
-  onPurchase: () => void
-}) {
-  const startNum = sectionIndex * 1000
-  const endNum = startNum + 999
-  const { tickets, availableCount, isLoading } = useTicketsByRange(startNum, endNum, open)
-
-  const generateTicketNumbers = () => {
-    if (tickets.length > 0) {
-      return tickets.map((ticket) => ({
-        number: ticket.ticket_number.toString().padStart(4, "0"),
-        available: ticket.is_available,
-      }))
-    }
-
-    const ticketList = []
-    for (let i = 0; i < 1000; i++) {
-      const ticketNumber = startNum + i
-      ticketList.push({
-        number: ticketNumber.toString().padStart(4, "0"),
-        available: true,
-      })
-    }
-    return ticketList
-  }
-
-  const ticketNumbers = generateTicketNumbers()
-  const selectedInSection = selectedTickets.filter((ticket) => {
-    const ticketNum = Number.parseInt(ticket)
-    return ticketNum >= startNum && ticketNum <= endNum
-  })
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] bg-white border-slate-200">
-        <DialogHeader>
-          <DialogTitle className="text-amber-600 text-xl flex items-center justify-between">
-            <span>
-              Boletos {startNum.toString().padStart(4, "0")} - {endNum.toString().padStart(4, "0")}
-            </span>
-            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
-              {availableCount} disponibles
-            </Badge>
-          </DialogTitle>
-        </DialogHeader>
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
-          </div>
-        ) : (
-          <>
-            <div className="overflow-y-auto max-h-[60vh]">
-              <div className="grid grid-cols-10 gap-2 p-4">
-                {ticketNumbers.map((ticket) => (
-                  <Button
-                    key={ticket.number}
-                    variant="outline"
-                    size="sm"
-                    className={`h-8 text-xs ${
-                      !ticket.available
-                        ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed opacity-50"
-                        : selectedTickets.includes(ticket.number)
-                          ? "bg-amber-500 text-white border-amber-500"
-                          : "border-slate-300 text-slate-700 bg-white hover:bg-amber-500 hover:text-white hover:border-amber-500"
-                    }`}
-                    onClick={() => toggleTicketSelection(ticket.number, ticket.available)}
-                    disabled={!ticket.available}
-                  >
-                    {ticket.number}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center pt-4 border-t border-slate-200">
-              <div className="flex gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 border border-slate-300 bg-white rounded"></div>
-                  <span className="text-slate-600">Disponible</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-amber-500 rounded"></div>
-                  <span className="text-slate-600">Seleccionado</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-gray-400 rounded"></div>
-                  <span className="text-slate-600">Vendido</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <p className="text-amber-600 font-semibold">
-                  {selectedInSection.length > 0
-                    ? `${selectedInSection.length} seleccionados`
-                    : `${availableCount} disponibles`}
-                </p>
-                {selectedInSection.length > 0 && (
-                  <Button onClick={onPurchase} className="bg-emerald-500 hover:bg-emerald-600 text-white" size="sm">
-                    <ShoppingCart className="h-4 w-4 mr-1" />
-                    Comprar Seleccionados
-                  </Button>
-                )}
-              </div>
-            </div>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
   )
 }
