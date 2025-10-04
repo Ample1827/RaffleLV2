@@ -964,6 +964,11 @@ function SectionDialogContent({
 
   const ticketNumbers = generateTicketNumbers()
 
+  const selectedInSection = selectedTickets.filter((ticket) => {
+    const ticketNum = Number.parseInt(ticket)
+    return ticketNum >= startNum && ticketNum <= endNum
+  })
+
   return (
     <>
       <DialogHeader>
@@ -983,22 +988,30 @@ function SectionDialogContent({
         </div>
       ) : (
         <>
-          <div className="overflow-y-auto max-h-[60vh]">
-            <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-1 sm:gap-2 p-2 sm:p-4">
+          <div className="overflow-y-auto max-h-[60vh] pb-4 sm:pb-0">
+            <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-1.5 sm:gap-2 p-2 sm:p-4">
               {ticketNumbers.map((ticket) => (
                 <Button
                   key={ticket.number}
                   variant="outline"
                   size="sm"
-                  className={`h-7 sm:h-8 text-[10px] sm:text-xs ${
-                    !ticket.available
-                      ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed opacity-50"
-                      : selectedTickets.includes(ticket.number)
-                        ? "bg-amber-500 text-white border-amber-500"
-                        : "border-slate-300 text-slate-700 bg-white hover:bg-amber-500 hover:text-white hover:border-amber-500"
-                  }`}
+                  className={`
+                    h-10 sm:h-8 
+                    text-xs sm:text-xs 
+                    font-semibold
+                    transition-all duration-150
+                    touch-manipulation
+                    ${
+                      !ticket.available
+                        ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed opacity-50"
+                        : selectedTickets.includes(ticket.number)
+                          ? "bg-amber-500 text-white border-amber-500 shadow-md scale-95"
+                          : "border-slate-300 text-slate-700 bg-white hover:bg-amber-500 hover:text-white hover:border-amber-500 active:scale-90 active:bg-amber-600"
+                    }
+                  `}
                   onClick={() => toggleTicketSelection(ticket.number, ticket.available)}
                   disabled={!ticket.available}
+                  style={{ touchAction: "manipulation" }}
                 >
                   {ticket.number}
                 </Button>
@@ -1006,8 +1019,9 @@ function SectionDialogContent({
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 pt-4 border-t border-slate-200">
-            <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm">
+          <div className="flex flex-col gap-3 pt-4 border-t border-slate-200">
+            {/* Legend */}
+            <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm justify-center sm:justify-start">
               <div className="flex items-center gap-1 sm:gap-2">
                 <div className="w-3 h-3 border border-slate-300 bg-white rounded"></div>
                 <span className="text-slate-600">Disponible</span>
@@ -1021,19 +1035,29 @@ function SectionDialogContent({
                 <span className="text-slate-600">Vendido</span>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
-              <p className="text-amber-600 font-semibold text-sm sm:text-base">{availableCount} boletos disponibles</p>
-              {selectedTickets.filter((ticket) => {
-                const ticketNum = Number.parseInt(ticket)
-                return ticketNum >= startNum && ticketNum <= endNum
-              }).length > 0 && (
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+              <p className="text-amber-600 font-semibold text-sm sm:text-base text-center sm:text-left">
+                {availableCount} boletos disponibles
+              </p>
+              {selectedInSection.length > 0 && (
                 <Button
                   onClick={() => handlePurchaseFromTable(ticketNumbers.map((t) => t.number))}
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white w-full sm:w-auto"
-                  size="sm"
+                  className="
+                    bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700
+                    text-white font-bold
+                    w-full sm:w-auto
+                    h-12 sm:h-10
+                    text-base sm:text-sm
+                    shadow-lg
+                    transition-all duration-150
+                    active:scale-95
+                    touch-manipulation
+                  "
+                  style={{ touchAction: "manipulation" }}
                 >
-                  <ShoppingCart className="h-4 w-4 mr-1" />
-                  Comprar Seleccionados
+                  <ShoppingCart className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
+                  Comprar Seleccionados ({selectedInSection.length})
                 </Button>
               )}
             </div>
