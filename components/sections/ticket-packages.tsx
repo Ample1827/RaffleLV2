@@ -33,14 +33,14 @@ const TicketButton = memo(
           min-h-[44px] sm:min-h-[40px]
           text-xs sm:text-xs 
           font-semibold
-          transition-all duration-50
+          transition-none
           touch-manipulation
           ${
             !ticket.available
               ? "bg-gray-400 text-gray-600 border-gray-400 cursor-not-allowed opacity-50"
               : isSelected
-                ? "bg-amber-500 text-white border-amber-500 shadow-md"
-                : "border-slate-300 text-slate-700 bg-white hover:bg-amber-100 hover:border-amber-400"
+                ? "bg-blue-500 text-white border-blue-500 shadow-md"
+                : "border-slate-300 text-slate-700 bg-white hover:bg-blue-50 hover:border-blue-300"
           }
         `}
         onClick={() => onToggle(ticket.number, ticket.available)}

@@ -16,9 +16,9 @@ export function useTicketsByRange(startNum: number, endNum: number, enabled = tr
     enabled ? ["tickets-range", startNum, endNum] : null,
     ticketRangeFetcher,
     {
-      refreshInterval: 5000,
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
+      refreshInterval: 0, // Disabled - only refresh manually
+      revalidateOnFocus: false, // Disabled - prevents unnecessary refetches
+      revalidateOnReconnect: false, // Disabled - prevents unnecessary refetches
       dedupingInterval: 3000,
     },
   )
@@ -35,9 +35,9 @@ export function useTicketsByRange(startNum: number, endNum: number, enabled = tr
 // Hook to fetch all tickets with real-time updates
 export function useAllTickets() {
   const { data, error, isLoading, mutate } = useSWR("all-tickets", allTicketsFetcher, {
-    refreshInterval: 10000,
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true,
+    refreshInterval: 0, // Disabled - only refresh manually or after purchases
+    revalidateOnFocus: false, // Disabled - prevents unnecessary refetches
+    revalidateOnReconnect: false, // Disabled - prevents unnecessary refetches
     dedupingInterval: 5000,
   })
 
