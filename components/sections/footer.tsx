@@ -37,29 +37,44 @@ export function Footer() {
             <h3 className="text-base md:text-lg font-bold mb-4 md:mb-6">Enlaces Rápidos</h3>
             <ul className="space-y-2 md:space-y-3">
               <li>
-                <a href="#" className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors">
-                  Rifas Actuales
-                </a>
+                <Link
+                  href="/buy-tickets"
+                  className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors"
+                >
+                  Comprar Boletos
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors">
+                <Link
+                  href="/#como-funciona"
+                  className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors"
+                >
                   Cómo Funciona
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors">
-                  Galería de Ganadores
-                </a>
+                <Link
+                  href="/dashboard"
+                  className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors"
+                >
+                  Mis Compras
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors">
-                  Acerca de Nosotros
-                </a>
+                <Link
+                  href="/#premios"
+                  className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors"
+                >
+                  Premios
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors">
+                <Link
+                  href="/#contacto"
+                  className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors"
+                >
                   Contacto
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -69,27 +84,42 @@ export function Footer() {
             <h3 className="text-base md:text-lg font-bold mb-4 md:mb-6">Soporte</h3>
             <ul className="space-y-2 md:space-y-3">
               <li>
-                <a href="#" className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors">
+                <a
+                  href="https://wa.me/5212216250235?text=Hola,%20necesito%20ayuda"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors"
+                >
                   Centro de Ayuda
                 </a>
               </li>
               <li>
-                <a href="#" className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors">
+                <a
+                  href="https://www.gamblingsite.com/terms-of-service/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors"
+                >
                   Términos de Servicio
                 </a>
               </li>
               <li>
-                <a href="#" className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors">
+                <a
+                  href="https://supabase.com/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors"
+                >
                   Política de Privacidad
                 </a>
               </li>
               <li>
-                <a href="#" className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors">
-                  Juego Responsable
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors">
+                <a
+                  href="https://wa.me/5212216250235?text=Hola,%20tengo%20una%20pregunta"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm md:text-base text-gray-300 hover:text-purple-400 transition-colors"
+                >
                   Preguntas Frecuentes
                 </a>
               </li>
