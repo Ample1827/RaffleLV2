@@ -331,7 +331,7 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
 ¡Gracias por tu compra! 🎉`
 
       console.log("[v0] Opening WhatsApp with message...")
-      openWhatsApp("+5216642709153", message)
+      openWhatsApp("+5212216250235", message)
 
       setShowPurchaseDialog(false)
       alert(

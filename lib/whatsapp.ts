@@ -50,7 +50,7 @@ ${data.ticketNumbers.join(", ")}
 
 Por favor contacta a soporte para más información sobre el rechazo de tu pago.
 
-Número de soporte: +52 123 456 7890`
+Número de soporte: +52 1 221 625 0235`
   }
 
   return message
@@ -72,6 +72,5 @@ export function openWhatsApp(phoneNumber: string, message: string): void {
   window.open(url, "_blank")
 }
 
-// Default support phone number
-export const SUPPORT_PHONE = "+52 123 456 7890"
-export const SUPPORT_PHONE_CLEAN = "5212345678901"
+export const SUPPORT_PHONE = "+52 1 221 625 0235"
+export const SUPPORT_PHONE_CLEAN = "5212216250235"

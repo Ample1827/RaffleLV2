@@ -55,7 +55,7 @@ Puedes realizar transferencias a nuestras cuentas bancarias:
 
 ¿En qué puedo ayudarte específicamente?`
 
-    const whatsappUrl = `https://wa.me/5216642709153?text=${encodeURIComponent(message)}`
+    const whatsappUrl = `https://wa.me/5212216250235?text=${encodeURIComponent(message)}`
     window.open(whatsappUrl, "_blank")
   }
 

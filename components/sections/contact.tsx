@@ -8,7 +8,7 @@ import { useState } from "react"
 
 export function Contact() {
   const [message, setMessage] = useState("")
-  const whatsappNumber = "5216642709153"
+  const whatsappNumber = "5212216250235"
 
   const handleWhatsAppClick = () => {
     if (!message.trim()) {
@@ -140,7 +140,7 @@ export function Contact() {
                 </div>
                 <div>
                   <h4 className="font-bold text-xs md:text-sm text-foreground mb-0.5">WhatsApp</h4>
-                  <p className="text-xs md:text-sm text-muted-foreground">+52 1 664 270 9153</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">+52 1 221 625 0235</p>
                   <p className="text-[10px] md:text-xs text-muted-foreground/80">Respuesta inmediata</p>
                 </div>
               </div>
@@ -151,7 +151,7 @@ export function Contact() {
                 </div>
                 <div>
                   <h4 className="font-bold text-xs md:text-sm text-foreground mb-0.5">Llámanos</h4>
-                  <p className="text-xs md:text-sm text-muted-foreground">+52 1 664 270 9153</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">+52 1 221 625 0235</p>
                   <p className="text-[10px] md:text-xs text-muted-foreground/80">Disponible 24/7</p>
                 </div>
               </div>
