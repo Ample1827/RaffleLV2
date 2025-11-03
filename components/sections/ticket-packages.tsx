@@ -839,24 +839,28 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
       {selectedTickets.length > 0 && !selectedPackage && <div className="h-24 md:hidden" aria-hidden="true"></div>}
 
       <Dialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog}>
-        <DialogContent className="max-w-2xl bg-white border-slate-200">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-white border-slate-200">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-slate-800 mb-4">Resumen de Boletos a Reservar</DialogTitle>
-            <p className="text-slate-600">Revisa los boletos seleccionados y completa el formulario para continuar.</p>
+            <DialogTitle className="text-xl sm:text-2xl font-bold text-slate-800 mb-2 sm:mb-4">
+              Resumen de Boletos a Reservar
+            </DialogTitle>
+            <p className="text-sm sm:text-base text-slate-600">
+              Revisa los boletos seleccionados y completa el formulario para continuar.
+            </p>
           </DialogHeader>
 
-          <div className="space-y-6">
-            <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
-              <h3 className="font-semibold text-amber-700 mb-2">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="bg-amber-50 border border-amber-200 p-3 sm:p-4 rounded-lg">
+              <h3 className="font-semibold text-amber-700 mb-2 text-sm sm:text-base">
                 {selectedPackage
                   ? `${getSelectedPackageInfo()?.tickets} Boletos Seleccionados`
                   : `${selectedTickets.length} Boletos Seleccionados`}
               </h3>
               {selectedPackage && assignedPackageTickets.length > 0 && (
                 <div className="text-slate-700">
-                  <p className="mb-2">Paquete de {getSelectedPackageInfo()?.tickets} boletos</p>
-                  <div className="bg-white p-3 rounded border">
-                    <p className="text-sm font-medium text-slate-600 mb-2">Números asignados:</p>
+                  <p className="mb-2 text-sm">Paquete de {getSelectedPackageInfo()?.tickets} boletos</p>
+                  <div className="bg-white p-2 sm:p-3 rounded border">
+                    <p className="text-xs sm:text-sm font-medium text-slate-600 mb-2">Números asignados:</p>
                     <div className="flex flex-wrap gap-1">
                       {assignedPackageTickets.map((ticket) => (
                         <Badge key={ticket} className="bg-amber-500 text-white text-xs">
@@ -868,7 +872,7 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
                 </div>
               )}
               {selectedTickets.length > 0 && !selectedPackage && (
-                <div className="text-slate-700">
+                <div className="text-slate-700 text-sm">
                   <p>
                     Boletos individuales: {selectedTickets.slice(0, 10).join(", ")}
                     {selectedTickets.length > 10 && ` y ${selectedTickets.length - 10} más...`}
@@ -877,52 +881,52 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <Label htmlFor="firstName" className="text-slate-700">
+                <Label htmlFor="firstName" className="text-slate-700 text-sm">
                   Nombre
                 </Label>
                 <Input
                   id="firstName"
                   value={purchaseForm.firstName}
                   onChange={(e) => handleFormChange("firstName", e.target.value)}
-                  className="bg-slate-50 border-slate-200"
+                  className="bg-slate-50 border-slate-200 h-10"
                   placeholder="Tu nombre"
                 />
               </div>
               <div>
-                <Label htmlFor="lastName" className="text-slate-700">
+                <Label htmlFor="lastName" className="text-slate-700 text-sm">
                   Apellido
                 </Label>
                 <Input
                   id="lastName"
                   value={purchaseForm.lastName}
                   onChange={(e) => handleFormChange("lastName", e.target.value)}
-                  className="bg-slate-50 border-slate-200"
+                  className="bg-slate-50 border-slate-200 h-10"
                   placeholder="Tu apellido"
                 />
               </div>
               <div>
-                <Label htmlFor="phoneNumber" className="text-slate-700">
+                <Label htmlFor="phoneNumber" className="text-slate-700 text-sm">
                   Número de Teléfono
                 </Label>
                 <Input
                   id="phoneNumber"
                   value={purchaseForm.phoneNumber}
                   onChange={(e) => handleFormChange("phoneNumber", e.target.value)}
-                  className="bg-slate-50 border-slate-200"
+                  className="bg-slate-50 border-slate-200 h-10"
                   placeholder="123 456 7890"
                 />
               </div>
               <div>
-                <Label htmlFor="state" className="text-slate-700">
+                <Label htmlFor="state" className="text-slate-700 text-sm">
                   Estado
                 </Label>
                 <select
                   id="state"
                   value={purchaseForm.state}
                   onChange={(e) => handleFormChange("state", e.target.value)}
-                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded-md"
+                  className="w-full h-10 p-2 bg-slate-50 border border-slate-200 rounded-md text-sm"
                 >
                   <option value="">Selecciona tu estado</option>
                   {mexicanStates.map((state) => (
@@ -936,14 +940,14 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
 
             <div className="flex gap-2">
               <div className="flex-1">
-                <Label htmlFor="promoCode" className="text-slate-700">
+                <Label htmlFor="promoCode" className="text-slate-700 text-sm">
                   Código Promocional
                 </Label>
                 <Input
                   id="promoCode"
                   value={purchaseForm.promoCode}
                   onChange={(e) => handleFormChange("promoCode", e.target.value)}
-                  className="bg-slate-50 border-slate-200"
+                  className="bg-slate-50 border-slate-200 h-10"
                   placeholder="Código opcional"
                 />
               </div>
@@ -951,16 +955,16 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
                 <Button
                   onClick={applyPromoCode}
                   variant="outline"
-                  className="border-amber-300 text-amber-600 hover:bg-amber-50 bg-transparent"
+                  className="border-amber-300 text-amber-600 hover:bg-amber-50 bg-transparent h-10 text-sm"
                 >
                   Aplicar
                 </Button>
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
-              <h3 className="font-semibold text-slate-800 mb-2">Resumen del Pedido</h3>
-              <div className="space-y-2">
+            <div className="bg-slate-50 border border-slate-200 p-3 sm:p-4 rounded-lg">
+              <h3 className="font-semibold text-slate-800 mb-2 text-sm sm:text-base">Resumen del Pedido</h3>
+              <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>Boletos:</span>
                   <span>{selectedPackage ? getSelectedPackageInfo()?.tickets : selectedTickets.length}</span>
@@ -975,7 +979,7 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
                   </span>
                 </div>
                 <div className="border-t border-slate-300 pt-2">
-                  <div className="flex justify-between font-bold text-lg">
+                  <div className="flex justify-between font-bold text-base sm:text-lg">
                     <span>Total:</span>
                     <span className="text-amber-600">
                       ${selectedPackage ? getSelectedPackageInfo()?.price : selectedTickets.length * 20}
@@ -985,17 +989,17 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
               </div>
             </div>
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2 sm:pt-4">
               <Button
                 onClick={handleCancel}
                 variant="outline"
-                className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50 bg-transparent"
+                className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50 bg-transparent h-12 sm:h-10 text-sm sm:text-base"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handlePayNow}
-                className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-emerald-700 text-white font-bold"
+                className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-emerald-700 text-white font-bold h-12 sm:h-10 text-sm sm:text-base"
               >
                 Pagar Ahora
               </Button>
