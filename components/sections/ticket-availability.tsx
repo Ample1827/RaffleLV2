@@ -123,6 +123,9 @@ export function TicketAvailability() {
 
       // Generate WhatsApp message
       const ticketId = purchase.ticketId
+      const websiteUrl = window.location.origin
+      const paymentInfoUrl = `${websiteUrl}/pagos`
+
       const message = `Hola, soy ${purchaseForm.firstName} ${purchaseForm.lastName}
 
 📋 *ID de Reserva:* ${ticketId}
@@ -140,6 +143,9 @@ ${selectedTickets.slice(0, 20).join(", ")}${selectedTickets.length > 20 ? `... y
 2. Envía tu comprobante de pago a este número
 3. Incluye tu ID de Reserva: ${ticketId}
 4. Espera la confirmación (máximo 24 horas)
+
+💳 *Información de Pago:* ${paymentInfoUrl}
+Consulta aquí los métodos de pago y cuentas bancarias disponibles.
 
 ¡Gracias por tu compra! 🎉`
 

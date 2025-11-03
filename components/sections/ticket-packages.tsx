@@ -302,6 +302,7 @@ export function TicketPackages() {
 
       const websiteUrl = window.location.origin
       const verifyTicketsUrl = `${websiteUrl}/verify-tickets`
+      const paymentInfoUrl = `${websiteUrl}/pagos`
 
       const message = `🌐 *Sitio Web:* ${websiteUrl}
 
@@ -324,6 +325,9 @@ ${ticketsList}
 4️⃣ Espera la confirmación (máximo 24 horas)
 
 ⚠️ *Importante:* Tus boletos están reservados por 24 horas. Si no recibes el pago en ese tiempo, la reserva será cancelada.
+
+💳 *Información de Pago:* ${paymentInfoUrl}
+Consulta aquí los métodos de pago y cuentas bancarias disponibles.
 
 🔍 *Verificar Boletos:* ${verifyTicketsUrl}
 Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Reserva.
@@ -584,7 +588,7 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
           <DialogTrigger asChild>
             <Button
               size="lg"
-              className="rainbow-glow text-white font-bold px-6 sm:px-12 md:px-16 py-4 sm:py-6 md:py-8 text-base sm:text-xl md:text-2xl shadow-2xl transform hover:scale-105 transition-all duration-300 relative overflow-hidden w-full sm:w-auto"
+              className="rainbow-glow text-white font-bold px-6 sm:px-12 md:px-16 py-4 sm:py-6 md:py-8 text-sm sm:text-xl md:text-2xl shadow-2xl transform hover:scale-105 transition-all duration-300 relative overflow-hidden w-full sm:w-auto"
               style={{
                 background: "linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #00ff00, #0080ff, #8000ff, #ff0000)",
                 backgroundSize: "400% 400%",
@@ -828,7 +832,7 @@ Usa este enlace para verificar tus boletos en cualquier momento con tu ID de Res
                 WebkitTapHighlightColor: "transparent",
               }}
             >
-              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 flex-shrink-0" />
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 flex-shrink-0" />
               <span className="hidden sm:inline">Guardar y Comprar Boletos</span>
               <span className="sm:hidden">Comprar ({selectedTickets.length})</span>
             </Button>
