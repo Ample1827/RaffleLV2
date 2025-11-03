@@ -1069,7 +1069,7 @@ function SectionDialogContent({
         </div>
       ) : (
         <>
-          <div className="overflow-y-auto max-h-[50vh] sm:max-h-[60vh] pb-2">
+          <div className="overflow-y-auto max-h-[30vh] sm:max-h-[45vh] md:max-h-[55vh] pb-2">
             <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-1.5 sm:gap-2 p-2 sm:p-4">
               {ticketNumbers.map((ticket) => (
                 <TicketButton
@@ -1082,25 +1082,25 @@ function SectionDialogContent({
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 pt-3 border-t border-slate-200 bg-white">
+          <div className="flex flex-col gap-1.5 sm:gap-2 pt-2 border-t border-slate-200 bg-white">
             {/* Legend - more compact on mobile */}
-            <div className="flex flex-wrap gap-2 sm:gap-3 text-xs justify-center px-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-3 text-[10px] sm:text-xs justify-center px-2">
               <div className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 border border-slate-300 bg-white rounded"></div>
+                <div className="w-2 h-2 sm:w-3 sm:h-3 border border-slate-300 bg-white rounded"></div>
                 <span className="text-slate-600">Disponible</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-amber-500 rounded"></div>
+                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-500 rounded"></div>
                 <span className="text-slate-600">Seleccionado</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gray-400 rounded"></div>
+                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gray-400 rounded"></div>
                 <span className="text-slate-600">Vendido</span>
               </div>
             </div>
 
-            {/* Available count and button */}
-            <div className="flex flex-col gap-2 px-2 pb-2">
+            {/* Button section - always visible */}
+            <div className="flex flex-col gap-1.5 sm:gap-2 px-2 pb-2">
               <p className="text-amber-600 font-semibold text-xs sm:text-sm text-center">
                 {availableCount} disponibles
               </p>
